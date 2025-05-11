@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "test_project:item/steel"
+    "layer0": "mainmod:item/orc_steel"
   }
 }

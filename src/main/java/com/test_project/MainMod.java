@@ -1,10 +1,12 @@
 package com.test_project;
 
-
+import com.test_project.blocks.ModBlocks;
 import com.test_project.items.ModItems;
 import net.minecraft.world.item.CreativeModeTabs;
 import org.slf4j.Logger;
+
 import com.mojang.logging.LogUtils;
+
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -36,6 +38,7 @@ public class MainMod {
         NeoForge.EVENT_BUS.register(this);
 
         ModItems.register(modEventBus);
+        ModBlocks.register(modEventBus);
 
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
@@ -52,6 +55,11 @@ public class MainMod {
         if(event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.STEEL);
             event.accept(ModItems.ORC_STEEL);
+        }
+
+        if(event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
+            event.accept(ModBlocks.STEEL_BLOCK);
+            event.accept(ModBlocks.STEEL_ORE);
         }
     }
 
