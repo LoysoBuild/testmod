@@ -1,9 +1,14 @@
 package com.test_project;
 
 import com.test_project.blocks.ModBlocks;
+import com.test_project.entity.ModEntities;
+import com.test_project.entity.TestMobEntity;
+import com.test_project.entity.TestMobRenderer;
 import com.test_project.items.ModItems;
 import com.test_project.world.biome.ModBiomes;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 import net.neoforged.api.distmarker.Dist;
@@ -27,6 +32,8 @@ public class MainMod {
     public MainMod(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Загрузка MainMod...");
         ModBiomes.register(modEventBus);
+        modEventBus.addListener(this::registerAttributes);
+        ModEntities.register(modEventBus);
         modEventBus.addListener(this::commonSetup);
         NeoForge.EVENT_BUS.register(this);
 
@@ -47,11 +54,16 @@ public class MainMod {
         if(event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.STEEL);
             event.accept(ModItems.ORC_STEEL);
+            event.accept(ModItems.TEST_MOB_SPAWN_EGG.get() );
         }
         if(event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(ModBlocks.STEEL_BLOCK);
             event.accept(ModBlocks.STEEL_ORE);
         }
+    }
+
+    private void registerAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.TEST_MOB.get(), TestMobEntity.createAttributes().build());
     }
 
     @SubscribeEvent
