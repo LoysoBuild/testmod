@@ -2,6 +2,7 @@ package com.test_project;
 
 import com.test_project.blocks.ModBlocks;
 import com.test_project.items.ModItems;
+import com.test_project.world.biome.ModBiomes;
 import net.minecraft.world.item.CreativeModeTabs;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
@@ -25,7 +26,7 @@ public class MainMod {
 
     public MainMod(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Загрузка MainMod...");
-
+        ModBiomes.register(modEventBus);
         modEventBus.addListener(this::commonSetup);
         NeoForge.EVENT_BUS.register(this);
 
