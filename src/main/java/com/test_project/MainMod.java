@@ -4,7 +4,6 @@ import com.test_project.blocks.ModBlocks;
 import com.test_project.entity.ModEntities;
 import com.test_project.entity.TestMobEntity;
 import com.test_project.faction.FactionAttachments;
-import com.test_project.faction.FactionRegistry;
 import com.test_project.items.ModItems;
 import com.test_project.world.biome.ModBiomes;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -42,7 +41,6 @@ public class MainMod {
         FactionAttachments.register(modEventBus);
 
         modEventBus.addListener(this::addCreative);
-        FactionRegistry.register(new com.test_project.factions.GondorFaction());
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
         LOGGER.info("MainMod успешно загружен!");
