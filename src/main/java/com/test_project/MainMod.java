@@ -6,7 +6,9 @@ import com.test_project.entity.TestMobEntity;
 import com.test_project.faction.FactionAttachments;
 import com.test_project.faction.FactionCommands;
 import com.test_project.faction.FactionRegistry;
+import com.test_project.faction.factions_list.BanditFaction;
 import com.test_project.faction.factions_list.GondorFaction;
+import com.test_project.faction.factions_list.MordorFaction;
 import com.test_project.items.ModItems;
 import com.test_project.world.biome.ModBiomes;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -43,6 +45,10 @@ public class MainMod {
 
         // Регистрация фракций и Data Attachments
         FactionRegistry.register(new GondorFaction());
+        FactionRegistry.register(new MordorFaction());
+        FactionRegistry.register(new BanditFaction());
+
+
         FactionAttachments.register(modEventBus);
 
         // Регистрация атрибутов сущностей

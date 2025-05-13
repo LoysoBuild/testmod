@@ -1,5 +1,7 @@
 package com.test_project.faction;
 
+import net.minecraft.resources.ResourceLocation;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -14,6 +16,8 @@ public abstract class FactionBase {
     public abstract String getDescription();
     public abstract List<String> getBaseRewards();
     public abstract int getStartReputation();
+    public abstract FactionCategory getCategory();
+    public abstract ResourceLocation getEmblem();
 
     // Динамические союзники и враги через FactionManager
     public List<String> getAllies() {
@@ -31,6 +35,7 @@ public abstract class FactionBase {
                 .filter(otherId -> FactionManager.getRelation(getId(), otherId) == FactionRelation.ENEMY)
                 .collect(Collectors.toList());
     }
+
 
 
     // Остальные методы как раньше

@@ -10,42 +10,43 @@ import java.util.UUID;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GondorFaction extends FactionBase {
-    // Храним индивидуальную репутацию игроков (в реальности лучше использовать FactionPlayerData, но для примера - так)
+public class BanditFaction extends FactionBase {
+    // Храним индивидуальную репутацию игроков (для примера)
     private final Map<UUID, Integer> reputation = new HashMap<>();
 
     @Override
     public String getId() {
-        return "gondor";
+        return "bandits";
     }
 
     @Override
     public String getDisplayName() {
-        return "Гондор";
+        return "Бандиты";
     }
 
     @Override
     public String getDescription() {
-        return "Великая фракция людей юга, защищающая Средиземье от зла.";
+        return "Группировка разбойников, живущих вне закона и нападающих на путников.";
     }
 
+    @Override
     public FactionCategory getCategory() {
-        return FactionCategory.GOOD;
+        return FactionCategory.NEUTRAL;
     }
 
     @Override
     public List<String> getAllies() {
-        return Arrays.asList("rohan", "elfs");
+        return Arrays.asList("mordor"); // Например, дружат с Мордором
     }
 
     @Override
     public List<String> getEnemies() {
-        return Arrays.asList("mordor", "gundabad");
+        return Arrays.asList("gondor", "rohan", "elfs"); // Враждуют с добрыми фракциями
     }
 
     @Override
     public List<String> getBaseRewards() {
-        return Arrays.asList("gondor_sword", "gondor_shield");
+        return Arrays.asList("bandit_knife", "bandit_mask");
     }
 
     @Override
@@ -62,7 +63,6 @@ public class GondorFaction extends FactionBase {
     public int getReputation(UUID playerId) {
         return reputation.getOrDefault(playerId, getStartReputation());
     }
-
     @Override
     public ResourceLocation getEmblem() {
         return ResourceLocation.fromNamespaceAndPath("mainmod", "textures/gui/emblems/gondor.png");
