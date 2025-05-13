@@ -4,9 +4,13 @@ import com.test_project.blocks.ModBlocks;
 import com.test_project.entity.ModEntities;
 import com.test_project.entity.TestMobEntity;
 import com.test_project.faction.FactionAttachments;
+import com.test_project.faction.FactionCommands;
+import com.test_project.faction.FactionRegistry;
+import com.test_project.faction.factions_list.GondorFaction;
 import com.test_project.items.ModItems;
 import com.test_project.world.biome.ModBiomes;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
@@ -30,33 +34,51 @@ public class MainMod {
 
     public MainMod(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Загрузка MainMod...");
+
+        // Регистрация биомов, предметов, блоков, сущностей
         ModBiomes.register(modEventBus);
-        modEventBus.addListener(this::registerAttributes);
-        ModEntities.register(modEventBus);
-        modEventBus.addListener(this::commonSetup);
-        NeoForge.EVENT_BUS.register(this);
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
+        ModEntities.register(modEventBus);
 
+        // Регистрация фракций и Data Attachments
+        FactionRegistry.register(new GondorFaction());
         FactionAttachments.register(modEventBus);
 
+        // Регистрация атрибутов сущностей
+        modEventBus.addListener(this::registerAttributes);
+
+        // Регистрация креативных вкладок
         modEventBus.addListener(this::addCreative);
+
+        // Регистрация конфигов
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
+        // Регистрация команд
+        NeoForge.EVENT_BUS.register(CommandRegistration.class);
+
+        // Common setup
+        modEventBus.addListener(this::commonSetup);
+
+        // Регистрация событий на сервере
+        NeoForge.EVENT_BUS.register(this);
 
         LOGGER.info("MainMod успешно загружен!");
     }
+
+    // --- Методы-обработчики событий ---
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         LOGGER.debug("Выполняется commonSetup MainMod");
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        if(event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+        if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.STEEL);
             event.accept(ModItems.ORC_STEEL);
-            event.accept(ModItems.TEST_MOB_SPAWN_EGG.get() );
+            event.accept(ModItems.TEST_MOB_SPAWN_EGG.get());
         }
-        if(event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
+        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(ModBlocks.STEEL_BLOCK);
             event.accept(ModBlocks.STEEL_ORE);
         }
@@ -71,6 +93,15 @@ public class MainMod {
         LOGGER.debug("Сервер стартует с MainMod");
     }
 
+    // --- Регистрация команд ---
+    public static class CommandRegistration {
+        @SubscribeEvent
+        public static void onRegisterCommands(RegisterCommandsEvent event) {
+            FactionCommands.register(event.getDispatcher());
+        }
+    }
+
+    // --- Клиентские события ---
     @EventBusSubscriber(modid = MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent
