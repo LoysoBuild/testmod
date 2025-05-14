@@ -1,8 +1,8 @@
 package com.test_project.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-
-import com.test_project.worldrep.WorldReputation;
+import com.test_project.skills.Skill;
+import com.test_project.skills.SkillTree;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -11,9 +11,11 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.List;
+
 public class FactionGuiScreen extends Screen {
     private static final ResourceLocation BG_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath("mainmod", "textures/gui/faction_menu.png");
+            ResourceLocation.fromNamespaceAndPath("mainmod", "textures/gui/menu/faction_menu.png");
     private static final ResourceLocation CLOSE_ICON =
             ResourceLocation.fromNamespaceAndPath("mainmod", "textures/gui/close_icon.png");
     private static final ResourceLocation EMBLEM_TEXTURE =
@@ -23,6 +25,10 @@ public class FactionGuiScreen extends Screen {
     private static final int BG_HEIGHT = 256;
 
     private int bgX, bgY;
+
+    // Кастомные кнопки
+    private OverlayButton overlayButton;
+    private OverlayButton skillTreeButton;
 
     public FactionGuiScreen() {
         super(Component.literal("Фракции"));
@@ -39,33 +45,47 @@ public class FactionGuiScreen extends Screen {
 
         addRenderableWidget(new ImageButton(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize, CLOSE_ICON, this::onClose));
 
-        // Кнопка "Дерево навыков"
-        int skillBtnWidth = 120;
-        int skillBtnHeight = 20;
-        int skillBtnX = bgX + (BG_WIDTH - skillBtnWidth) / 2;
-        int skillBtnY = bgY + BG_HEIGHT - skillBtnHeight - 20;
+        // Супер кнопка
+        int overlayBtnWidth = 80;
+        int overlayBtnHeight = 20;
+        int overlayBtnX = bgX + (BG_WIDTH - overlayBtnWidth) / 2;
+        int overlayBtnY = bgY + 90;
+        overlayButton = new OverlayButton(
+                overlayBtnX, overlayBtnY, overlayBtnWidth, overlayBtnHeight,
+                Component.literal("Супер кнопка"),
+                () -> this.minecraft.player.sendSystemMessage(Component.literal("Нажата супер кнопка!"))
+        );
 
-        addRenderableWidget(new TextButton(skillBtnX, skillBtnY, skillBtnWidth, skillBtnHeight,
-                Component.literal("Дерево навыков"), () -> {
-            // Здесь можно получить репутацию игрока из capability или другого хранилища
-            // Для теста создаём временную репутацию:
-            WorldReputation rep = new WorldReputation(100);
-            this.minecraft.setScreen(new SkillTreeScreen(rep));
-        }));
+        // Кнопка "Дерево навыков"
+        int skillTreeBtnWidth = 120;
+        int skillTreeBtnHeight = 20;
+        int skillTreeBtnX = bgX + (BG_WIDTH - skillTreeBtnWidth) / 2;
+        int skillTreeBtnY = bgY + 120; // ниже "супер кнопки"
+        skillTreeButton = new OverlayButton(
+                skillTreeBtnX, skillTreeBtnY, skillTreeBtnWidth, skillTreeBtnHeight,
+                Component.literal("Дерево навыков"),
+                () -> {
+                    SkillTree skillTree = new SkillTree("player");
+                    skillTree.addSkill(new Skill("strength", "Сила", List.of(), 10, Skill.ReputationType.WORLD, null));
+                    skillTree.addSkill(new Skill("agility", "Ловкость", List.of("strength"), 15, Skill.ReputationType.WORLD, null));
+                    Minecraft.getInstance().setScreen(new SkillTreeScreen(skillTree));
+                }
+        );
+
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // 1. Кнопки и виджеты
+        // 1. Кнопки и виджеты (самый нижний слой)
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        // 2. Фон
+        // 2. Фон поверх кнопок (но под кастомными элементами)
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, BG_TEXTURE);
         guiGraphics.blit(BG_TEXTURE, bgX, bgY, 0, 0, BG_WIDTH, BG_HEIGHT);
 
-        // 3. Эмблема и текст
+        // 3. Эмблема и текст поверх фона
         int emblemSize = 48;
         int emblemX = bgX + (BG_WIDTH - emblemSize) / 2;
         int emblemY = bgY + 30;
@@ -76,6 +96,41 @@ public class FactionGuiScreen extends Screen {
         int titleX = bgX + (BG_WIDTH - font.width(title)) / 2;
         int titleY = bgY + 10;
         guiGraphics.drawString(font, title, titleX, titleY, 0xFFFFFF, false);
+
+        // 4. Кастомные кнопки - рисуем поверх всего
+        overlayButton.render(guiGraphics, mouseX, mouseY, partialTick);
+        skillTreeButton.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    // Обработка клика для overlayButton и skillTreeButton
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (overlayButton.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        if (skillTreeButton.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    // Кастомная кнопка, не добавляется в addRenderableWidget, а рисуется вручную
+    public static class OverlayButton extends Button {
+        public OverlayButton(int x, int y, int width, int height, Component label, Runnable onPress) {
+            super(x, y, width, height, label, btn -> onPress.run(), DEFAULT_NARRATION);
+        }
+
+        @Override
+        public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+            int color = isHoveredOrFocused() ? 0xFF66FF66 : 0xFF228822;
+            gui.fill(getX(), getY(), getX() + width, getY() + height, color);
+
+            int textColor = 0xFFFFFF;
+            var font = Minecraft.getInstance().font;
+            int textX = getX() + (width - font.width(getMessage())) / 2;
+            int textY = getY() + (height - font.lineHeight) / 2;
+            gui.drawString(font, getMessage(), textX, textY, textColor, false);
+        }
     }
 
     public static class ImageButton extends Button {

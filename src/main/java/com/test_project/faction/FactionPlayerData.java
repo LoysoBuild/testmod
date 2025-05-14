@@ -1,56 +1,61 @@
 package com.test_project.faction;
 
-import net.minecraft.nbt.CompoundTag;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class FactionPlayerData {
     private final Map<String, Integer> reputation = new HashMap<>();
 
+    public FactionPlayerData() {}
+
+    /**
+     * Получить репутацию по фракции. Если фракция не задана - вернуть 0.
+     */
     public int getReputation(String factionId) {
-        // Если фракция не существует - возвращаем 0
-        FactionBase faction = FactionRegistry.get(factionId);
-        if (faction == null) return 0;
-
-        // Если репутация не установлена - инициализируем стартовой репутацией
-        if (!reputation.containsKey(factionId)) {
-            reputation.put(factionId, faction.getStartReputation());
-        }
-        return reputation.get(factionId);
+        return reputation.getOrDefault(factionId, 0);
     }
 
+    /**
+     * Установить репутацию по фракции.
+     */
     public void setReputation(String factionId, int value) {
-        if (FactionRegistry.get(factionId) != null) {
-            reputation.put(factionId, value);
-        }
+        reputation.put(factionId, value);
     }
 
+    /**
+     * Изменить репутацию по фракции на заданное число.
+     */
     public void addReputation(String factionId, int amount) {
         setReputation(factionId, getReputation(factionId) + amount);
     }
 
+    /**
+     * Получить карту всей репутации (фракция -> значение).
+     */
     public Map<String, Integer> getAllReputation() {
         return reputation;
     }
 
-    public CompoundTag serializeNBT() {
-        CompoundTag tag = new CompoundTag();
-        reputation.forEach(tag::putInt);
-        return tag;
-    }
-
-    public void deserializeNBT(CompoundTag nbt) {
-        reputation.clear();
-        for (String key : nbt.getAllKeys()) {
-            reputation.put(key, nbt.getInt(key));
-        }
-    }
-
-    // Удобный метод для сброса всех репутаций к стартовым значениям
+    /**
+     * Сбросить все значения репутации.
+     */
     public void resetAll() {
         reputation.clear();
-        for (FactionBase faction : FactionRegistry.all()) {
-            reputation.put(faction.getId(), faction.getStartReputation());
-        }
     }
+
+    /**
+     * Codec для сериализации/десериализации через Attachments API.
+     */
+    public static final Codec<FactionPlayerData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.unboundedMap(Codec.STRING, Codec.INT)
+                    .fieldOf("reputation")
+                    .forGetter(FactionPlayerData::getAllReputation)
+    ).apply(instance, map -> {
+        FactionPlayerData data = new FactionPlayerData();
+        data.reputation.putAll(map);
+        return data;
+    }));
 }
