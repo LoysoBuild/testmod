@@ -80,6 +80,7 @@ public class MainMod {
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.STEEL);
+            event.accept(ModItems.GONDOR_PIKE);
             event.accept(ModItems.ORC_STEEL);
             event.accept(ModItems.TEST_MOB_SPAWN_EGG.get());
         }
