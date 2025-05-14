@@ -1,121 +1,136 @@
 package com.test_project.gui;
 
-import com.test_project.faction.FactionBase;
-import com.test_project.faction.FactionCategory;
-import com.test_project.faction.FactionRegistry;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.List;
-import java.util.stream.StreamSupport;
-
 public class FactionGuiScreen extends Screen {
-    private int categoryIndex = 0;
-    private int factionPage = 0;
-    private List<FactionBase> currentFactions;
+    private static final ResourceLocation BG_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("mainmod", "textures/gui/faction_menu1.png");
+    private static final ResourceLocation CLOSE_ICON =
+            ResourceLocation.fromNamespaceAndPath("mainmod", "textures/gui/close_icon.png");
+    private static final ResourceLocation EMBLEM_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("mainmod", "textures/gui/emblems/gondor.png"); // пример
+
+    private static final int BG_WIDTH = 256;
+    private static final int BG_HEIGHT = 256;
+
+    private int bgX, bgY;
+
+    // Кастомная "поверхностная" кнопка
+    private OverlayButton overlayButton;
 
     public FactionGuiScreen() {
         super(Component.literal("Фракции"));
-        updateFactionList();
-    }
-
-    private void updateFactionList() {
-        FactionCategory currentCategory = FactionCategory.values()[categoryIndex];
-        currentFactions = StreamSupport.stream(FactionRegistry.all().spliterator(), false)
-                .filter(f -> f.getCategory() == currentCategory)
-                .toList();
-        if (factionPage >= currentFactions.size()) factionPage = 0;
     }
 
     @Override
     protected void init() {
-        clearWidgets();
-        int centerX = width / 2;
-        int topY = 40;
+        bgX = (this.width - BG_WIDTH) / 2;
+        bgY = (this.height - BG_HEIGHT) / 2;
 
-        // Стрелки категорий
-        addRenderableWidget(Button.builder(Component.literal("<"), b -> {
-            categoryIndex = (categoryIndex - 1 + FactionCategory.values().length) % FactionCategory.values().length;
-            updateFactionList();
-            this.init();
-        }).bounds(centerX - 80, topY, 20, 20).build());
+        int closeBtnSize = 20;
+        int closeBtnX = bgX + BG_WIDTH - closeBtnSize - 6;
+        int closeBtnY = bgY + 6;
 
-        addRenderableWidget(Button.builder(Component.literal(">"), b -> {
-            categoryIndex = (categoryIndex + 1) % FactionCategory.values().length;
-            updateFactionList();
-            this.init();
-        }).bounds(centerX + 60, topY, 20, 20).build());
+        addRenderableWidget(new ImageButton(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize, CLOSE_ICON, this::onClose));
 
-        // Стрелки фракций
-        addRenderableWidget(Button.builder(Component.literal("<"), b -> {
-            if (!currentFactions.isEmpty()) {
-                factionPage = (factionPage - 1 + currentFactions.size()) % currentFactions.size();
-                this.init();
-            }
-        }).bounds(centerX - 80, topY + 60, 20, 20).build());
-
-        addRenderableWidget(Button.builder(Component.literal(">"), b -> {
-            if (!currentFactions.isEmpty()) {
-                factionPage = (factionPage + 1) % currentFactions.size();
-                this.init();
-            }
-        }).bounds(centerX + 60, topY + 60, 20, 20).build());
-
-   /*     // Кнопка "Дерево навыков"
-        addRenderableWidget(Button.builder(Component.literal("Дерево навыков"), b -> {
-            if (!currentFactions.isEmpty()) {
-                minecraft.setScreen(new FactionSkillTreeScreen(currentFactions.get(factionPage)));
-            }
-        }).bounds(centerX - 50, topY + 180, 100, 20).build());*/
-
-        // RenderableOnly для фона, текста и эмблемы (всегда поверх кнопок)
-        addRenderableOnly(new Renderable() {
-            @Override
-            public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-                renderForeground(gui, mouseX, mouseY, partialTick);
-            }
-        });
+        // Создаём кастомную кнопку, которая будет рисоваться вручную поверх всего
+        int overlayBtnWidth = 120;
+        int overlayBtnHeight = 20;
+        int overlayBtnX = bgX + (BG_WIDTH - overlayBtnWidth) / 2;
+        int overlayBtnY = bgY + BG_HEIGHT - overlayBtnHeight - 20;
+        overlayButton = new OverlayButton(overlayBtnX, overlayBtnY, overlayBtnWidth, overlayBtnHeight,
+                Component.literal("Супер кнопка"), () -> this.minecraft.player.sendSystemMessage(
+                Component.literal("Нажата супер кнопка!")));
     }
 
-    private void renderForeground(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-        // Регистрируем и рисуем фон здесь
-        ResourceLocation backgroundTexture = ResourceLocation.fromNamespaceAndPath("mainmod", "textures/gui/faction_menu.png");
-        int bgWidth = 152, bgHeight = 192;
-        int x = (this.width - bgWidth) / 2;
-        int y = (this.height - bgHeight) / 2;
-        gui.blit(backgroundTexture, x, y, 0, 0, bgWidth, bgHeight, bgWidth, bgHeight);
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // 1. Кнопки и виджеты (самый нижний слой)
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        int centerX = width / 2;
-        int topY = 40;
-        FactionCategory category = FactionCategory.values()[categoryIndex];
-        gui.drawCenteredString(this.font, "Категория: " + category.getDisplayName(), centerX, topY - 15, category.getColor());
+        // 2. Фон поверх кнопок (но под кастомными элементами)
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, BG_TEXTURE);
+        guiGraphics.blit(BG_TEXTURE, bgX, bgY, 0, 0, BG_WIDTH, BG_HEIGHT);
 
-        if (!currentFactions.isEmpty()) {
-            FactionBase faction = currentFactions.get(factionPage);
+        // 3. Эмблема и текст поверх фона
+        int emblemSize = 48;
+        int emblemX = bgX + (BG_WIDTH - emblemSize) / 2;
+        int emblemY = bgY + 30;
+        guiGraphics.blit(EMBLEM_TEXTURE, emblemX, emblemY, 0, 0, emblemSize, emblemSize, emblemSize, emblemSize);
 
-            // Эмблема фракции
-            if (faction.getEmblem() != null) {
-                int emblemSize = 48;
-                int emblemX = centerX - emblemSize / 2;
-                int emblemY = topY + 30;
-                gui.blit(faction.getEmblem(), emblemX, emblemY, 0, 0, emblemSize, emblemSize, emblemSize, emblemSize);
-            }
+        var font = Minecraft.getInstance().font;
+        String title = "Фракции";
+        int titleX = bgX + (BG_WIDTH - font.width(title)) / 2;
+        int titleY = bgY + 10;
+        guiGraphics.drawString(font, title, titleX, titleY, 0xFFFFFF, false);
 
-            gui.drawCenteredString(this.font, faction.getDisplayName(), centerX, topY + 85, 0xFFFFFF);
-            gui.drawCenteredString(this.font, faction.getDescription(), centerX, topY + 100, 0xAAAAAA);
-        } else {
-            gui.drawCenteredString(this.font, "Нет фракций в этой категории", centerX, topY + 70, 0xFF5555);
+        // 4. Кастомная кнопка - рисуем поверх всего
+        overlayButton.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    // Обработка клика для overlayButton
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (overlayButton.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    // Кастомная кнопка, не добавляется в addRenderableWidget, а рисуется вручную
+    public static class OverlayButton extends Button {
+        public OverlayButton(int x, int y, int width, int height, Component label, Runnable onPress) {
+            super(x, y, width, height, label, btn -> onPress.run(), DEFAULT_NARRATION);
+        }
+
+        @Override
+        public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+            int color = isHoveredOrFocused() ? 0xFF66FF66 : 0xFF228822;
+            gui.fill(getX(), getY(), getX() + width, getY() + height, color);
+
+            int textColor = 0xFFFFFF;
+            var font = Minecraft.getInstance().font;
+            int textX = getX() + (width - font.width(getMessage())) / 2;
+            int textY = getY() + (height - font.lineHeight) / 2;
+            gui.drawString(font, getMessage(), textX, textY, textColor, false);
+        }
+    }
+
+    public static class ImageButton extends Button {
+        private final ResourceLocation icon;
+
+        public ImageButton(int x, int y, int width, int height, ResourceLocation icon, Runnable onPress) {
+            super(x, y, width, height, Component.empty(), btn -> onPress.run(), DEFAULT_NARRATION);
+            this.icon = icon;
+        }
+
+        @Override
+        public void renderWidget(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
+            int color = isHoveredOrFocused() ? 0xFFAAAAAA : 0xFF888888;
+            gui.fill(getX(), getY(), getX() + width, getY() + height, color);
+
+            int iconSize = Math.min(width, height) - 4;
+            int iconX = getX() + (width - iconSize) / 2;
+            int iconY = getY() + (height - iconSize) / 2;
+            gui.blit(icon, iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
         }
     }
 
     @Override
-    public void render(GuiGraphics gui, int mouseX, int mouseY, float partialTick) {
-        // Не вызываем this.renderBackground(), чтобы не было размытости Minecraft!
-        super.render(gui, mouseX, mouseY, partialTick);
-        // Всё остальное (фон, текст, эмблема) рисуется в renderForeground через RenderableOnly
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) { // ESC
+            this.onClose();
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 }
