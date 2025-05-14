@@ -11,11 +11,9 @@ import com.test_project.faction.factions_list.GondorFaction;
 import com.test_project.faction.factions_list.MordorFaction;
 import com.test_project.items.ModItems;
 import com.test_project.world.biome.ModBiomes;
+import com.test_project.worldrep.ModAttachments;
+import com.test_project.worldrep.WorldReputationCommands;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
-import org.slf4j.Logger;
-import com.mojang.logging.LogUtils;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -25,9 +23,12 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import org.slf4j.Logger;
+import com.mojang.logging.LogUtils;
 
 @Mod(MainMod.MOD_ID)
 public class MainMod {
@@ -47,9 +48,10 @@ public class MainMod {
         FactionRegistry.register(new GondorFaction());
         FactionRegistry.register(new MordorFaction());
         FactionRegistry.register(new BanditFaction());
-
-
         FactionAttachments.register(modEventBus);
+
+        // Регистрация мировой репутации (AttachmentType)
+        ModAttachments.register(modEventBus);
 
         // Регистрация атрибутов сущностей
         modEventBus.addListener(this::registerAttributes);
@@ -57,17 +59,14 @@ public class MainMod {
         // Регистрация креативных вкладок
         modEventBus.addListener(this::addCreative);
 
-        // Регистрация конфигов
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-
         // Регистрация команд
-        NeoForge.EVENT_BUS.register(CommandRegistration.class);
+
+
+        // Регистрация конфигов (если есть)
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
         // Common setup
         modEventBus.addListener(this::commonSetup);
-
-        // Регистрация событий на сервере
-        NeoForge.EVENT_BUS.register(this);
 
         LOGGER.info("MainMod успешно загружен!");
     }
@@ -99,11 +98,12 @@ public class MainMod {
         LOGGER.debug("Сервер стартует с MainMod");
     }
 
-    // --- Регистрация команд ---
-    public static class CommandRegistration {
+    @EventBusSubscriber(modid = MainMod.MOD_ID)
+    public class CommandEvents {
         @SubscribeEvent
         public static void onRegisterCommands(RegisterCommandsEvent event) {
             FactionCommands.register(event.getDispatcher());
+            WorldReputationCommands.register(event.getDispatcher());
         }
     }
 
