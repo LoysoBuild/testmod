@@ -10,6 +10,7 @@ import com.test_project.faction.factions_list.BanditFaction;
 import com.test_project.faction.factions_list.GondorFaction;
 import com.test_project.faction.factions_list.MordorFaction;
 import com.test_project.items.ModItems;
+import com.test_project.items.weapone.AttackRangeAttributes;
 import com.test_project.world.biome.ModBiomes;
 import com.test_project.worldrep.ModAttachments;
 import com.test_project.worldrep.WorldReputationCommands;
@@ -54,6 +55,7 @@ public class MainMod {
         ModAttachments.register(modEventBus);
 
         // Регистрация атрибутов сущностей
+        AttackRangeAttributes.ATTRIBUTES.register(modEventBus);
         modEventBus.addListener(this::registerAttributes);
 
         // Регистрация креативных вкладок
@@ -80,7 +82,7 @@ public class MainMod {
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.STEEL);
-            event.accept(ModItems.GONDOR_PIKE);
+            event.accept(ModItems.GONDOR_SWORD);
             event.accept(ModItems.ORC_STEEL);
             event.accept(ModItems.TEST_MOB_SPAWN_EGG.get());
         }
