@@ -1,0 +1,9 @@
+{
+  "type": "neoforge:add_biomes",
+  "biomes": "mainmod:custom_plains",
+  "target": "#minecraft:is_overworld",
+  "placement": {
+    "type": "surface",
+    "chance": 0.1
+  }
+}
