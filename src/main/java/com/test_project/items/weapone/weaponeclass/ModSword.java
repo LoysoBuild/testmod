@@ -1,4 +1,4 @@
-package com.test_project.items.weapone.sword;
+package com.test_project.items.weapone.weaponeclass;
 
 
 import com.test_project.items.weapone.feature.WeaponFeatureSet;

@@ -1,6 +1,6 @@
 package com.test_project.items.weapone.feature;
 
-import com.test_project.items.weapone.sword.ModSword;
+import com.test_project.items.weapone.weaponeclass.ModSword;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
