@@ -1,7 +1,7 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "mainmod:item/gondor_hammer"
+    "layer0": "mainmod:item/gondor_axe"
   },
   "display": {
     "thirdperson_righthand": {

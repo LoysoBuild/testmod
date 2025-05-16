@@ -54,33 +54,9 @@ public class ModItems {
             ),
             new Item.Properties()
     );
-    public static final DeferredItem<ModBigAxe> GONDOR_BIG_AXE = ITEMS.registerItem(
-            "gondor_big_axe",
-            props -> new ModBigAxe(
-                    Tiers.NETHERITE,
-                    5.0F,
-                    -2.4F,
-                    2031,
-                    5.0,
-                    new WeaponFeatureSet().add("counterattack")
-            ),
-            new Item.Properties()
-    );
     public static final DeferredItem<ModHammer> GONDOR_HAMMER = ITEMS.registerItem(
             "gondor_hammer",
             props -> new ModHammer(
-                    Tiers.NETHERITE,
-                    5.0F,
-                    -2.4F,
-                    2031,
-                    5.0,
-                    new WeaponFeatureSet().add("counterattack")
-            ),
-            new Item.Properties()
-    );
-    public static final DeferredItem<ModBigHammer> GONDOR_BIG_HAMMER = ITEMS.registerItem(
-            "gondor_big_hammer",
-            props -> new ModBigHammer(
                     Tiers.NETHERITE,
                     5.0F,
                     -2.4F,

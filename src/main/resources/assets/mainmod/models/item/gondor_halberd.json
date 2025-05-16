@@ -1,11 +1,11 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "mainmod:item/gondor_hammer"
+    "layer0": "mainmod:item/gondor_halberd"
   },
   "display": {
     "thirdperson_righthand": {
       "rotation": [20.0, 270.0, 20.0],
-      "translation": [0.0, 3.0, 4.0],
+      "translation": [0.0, 5.0, 6.0],
       "scale": [1.5, 2.0, 1.0]
     }}}

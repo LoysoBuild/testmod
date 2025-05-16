@@ -88,6 +88,13 @@ public class MainMod {
             event.accept(ModItems.STEEL);
             event.accept(ModItems.GONDOR_SWORD);
             event.accept(ModItems.GONDOR_HAMMER);
+            event.accept(ModItems.GONDOR_HALBERD);
+            event.accept(ModItems.GONDOR_DAGGER);
+            event.accept(ModItems.GONDOR_AXE);
+            event.accept(ModItems.GONDOR_LONGSWORD);
+            event.accept(ModItems.GONDOR_SPEAR);
+            event.accept(ModItems.GONDOR_WHIP);
+
             event.accept(ModItems.ORC_STEEL);
             event.accept(ModItems.TEST_MOB_SPAWN_EGG.get());
         }
