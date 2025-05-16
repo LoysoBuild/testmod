@@ -3,17 +3,7 @@ package com.test_project.items;
 import com.test_project.MainMod;
 import com.test_project.entity.ModEntities;
 import com.test_project.items.weapone.feature.WeaponFeatureSet;
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-import com.test_project.items.weapone.weaponeclass.ModAxe;
-import com.test_project.items.weapone.weaponeclass.ModHalberd;
-import com.test_project.items.weapone.weaponeclass.ModSword;
-=======
->>>>>>> Stashed changes
-import com.test_project.items.weapone.hammer.ModHammer;
-import com.test_project.items.weapone.sword.ModSword;
->>>>>>> a8238784e08d63e14d6f55e460f4770a73f2c14d
+import com.test_project.items.weapone.weaponeclass.*;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.Tiers;
@@ -52,7 +42,7 @@ public class ModItems {
             ),
             new Item.Properties()
     );
-    public static final DeferredItem<ModSword> GONDOR_AXE = ITEMS.registerItem(
+    public static final DeferredItem<ModAxe> GONDOR_AXE = ITEMS.registerItem(
             "gondor_axe",
             props -> new ModAxe(
                     Tiers.NETHERITE,
@@ -64,9 +54,9 @@ public class ModItems {
             ),
             new Item.Properties()
     );
-    public static final DeferredItem<ModSword> GONDOR_BIG_AXE = ITEMS.registerItem(
+    public static final DeferredItem<ModBigAxe> GONDOR_BIG_AXE = ITEMS.registerItem(
             "gondor_big_axe",
-            props -> new ModSword(
+            props -> new ModBigAxe(
                     Tiers.NETHERITE,
                     5.0F,
                     -2.4F,
@@ -76,9 +66,9 @@ public class ModItems {
             ),
             new Item.Properties()
     );
-    public static final DeferredItem<ModSword> GONDOR_HAMMER = ITEMS.registerItem(
+    public static final DeferredItem<ModHammer> GONDOR_HAMMER = ITEMS.registerItem(
             "gondor_hammer",
-            props -> new ModSword(
+            props -> new ModHammer(
                     Tiers.NETHERITE,
                     5.0F,
                     -2.4F,
@@ -88,21 +78,9 @@ public class ModItems {
             ),
             new Item.Properties()
     );
-    public static final DeferredItem<ModSword> GONDOR_BIG_HAMMER = ITEMS.registerItem(
+    public static final DeferredItem<ModBigHammer> GONDOR_BIG_HAMMER = ITEMS.registerItem(
             "gondor_big_hammer",
-            props -> new ModSword(
-                    Tiers.NETHERITE,
-                    5.0F,
-                    -2.4F,
-                    2031,
-                    5.0,
-                    new WeaponFeatureSet().add("counterattack")
-            ),
-            new Item.Properties()
-    );
-    public static final DeferredItem<ModSword> GONDOR_BOW = ITEMS.registerItem(
-            "gondor_bow",
-            props -> new ModSword(
+            props -> new ModBigHammer(
                     Tiers.NETHERITE,
                     5.0F,
                     -2.4F,
@@ -193,32 +171,6 @@ public class ModItems {
                     2031,
                     5.0,
                     new WeaponFeatureSet().add("counterattack")
-            ),
-            new Item.Properties()
-    );
-
-    public static final DeferredItem<ModHammer> GONDOR_HAMMER = ITEMS.registerItem(
-            "gondor_hammer",
-            props -> new ModHammer(
-                    Tiers.NETHERITE,
-                    9.0F,
-                    -3.2F,
-                    2031,
-                    3.0,
-                    new WeaponFeatureSet().add("custom_knockback")
-            ),
-            new Item.Properties()
-    );
-
-    public static final DeferredItem<ModHammer> GONDOR_HAMMER = ITEMS.registerItem(
-            "gondor_hammer",
-            props -> new ModHammer(
-                    Tiers.NETHERITE,
-                    9.0F,
-                    -3.2F,
-                    2031,
-                    3.0,
-                    new WeaponFeatureSet().add("custom_knockback")
             ),
             new Item.Properties()
     );

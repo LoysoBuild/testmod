@@ -12,7 +12,6 @@ import com.test_project.faction.factions_list.MordorFaction;
 import com.test_project.items.ModItems;
 import com.test_project.items.weapone.AttackRangeAttributes;
 import com.test_project.items.weapone.feature.CounterAttackEventHandler;
-import com.test_project.items.weapone.feature.HammerSmashFeature;
 import com.test_project.items.weapone.feature.WeaponFeatureRegistry;
 import com.test_project.world.biome.ModBiomes;
 import com.test_project.worldrep.ModAttachments;
@@ -76,7 +75,6 @@ public class MainMod {
 
         LOGGER.info("MainMod успешно загружен!");
         NeoForge.EVENT_BUS.register(CounterAttackEventHandler.class);
-        WeaponFeatureRegistry.register(new HammerSmashFeature());
     }
 
     // --- Методы-обработчики событий ---
