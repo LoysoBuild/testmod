@@ -1,4 +1,4 @@
-package com.test_project.event;
+package com.test_project.items.weapone.feature;
 
 import com.test_project.items.weapone.sword.ModSword;
 import net.minecraft.world.entity.LivingEntity;

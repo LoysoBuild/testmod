@@ -74,7 +74,11 @@ public class ModSword extends SwordItem {
             }
         }
     }
-
+    public void triggerOnAttack(LivingEntity attacker, LivingEntity target, ItemStack stack) {
+        for (var f : featureSet.getAll()) {
+            f.onAttack(attacker, target, stack);
+        }
+    }
 
     // Аналогично можно добавить методы для парирования, оглушения и т.д.
 }

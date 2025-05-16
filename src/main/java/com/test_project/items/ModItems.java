@@ -3,6 +3,7 @@ package com.test_project.items;
 import com.test_project.MainMod;
 import com.test_project.entity.ModEntities;
 import com.test_project.items.weapone.feature.WeaponFeatureSet;
+import com.test_project.items.weapone.hammer.ModHammer;
 import com.test_project.items.weapone.sword.ModSword;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
@@ -39,6 +40,19 @@ public class ModItems {
                     2031,
                     5.0,
                     new WeaponFeatureSet().add("counterattack")
+            ),
+            new Item.Properties()
+    );
+
+    public static final DeferredItem<ModHammer> GONDOR_HAMMER = ITEMS.registerItem(
+            "gondor_hammer",
+            props -> new ModHammer(
+                    Tiers.NETHERITE,
+                    9.0F,
+                    -3.2F,
+                    2031,
+                    3.0,
+                    new WeaponFeatureSet().add("custom_knockback")
             ),
             new Item.Properties()
     );

@@ -17,6 +17,7 @@ public class WeaponFeatureRegistry {
     // Статическая инициализация (добавьте все нужные особенности)
     static {
         register(new CounterAttackFeature());
+        register(new HammerSmashFeature());
         // register(new ParryFeature());
         // register(new StunFeature());
     }

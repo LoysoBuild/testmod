@@ -11,6 +11,9 @@ import com.test_project.faction.factions_list.GondorFaction;
 import com.test_project.faction.factions_list.MordorFaction;
 import com.test_project.items.ModItems;
 import com.test_project.items.weapone.AttackRangeAttributes;
+import com.test_project.items.weapone.feature.CounterAttackEventHandler;
+import com.test_project.items.weapone.feature.HammerSmashFeature;
+import com.test_project.items.weapone.feature.WeaponFeatureRegistry;
 import com.test_project.world.biome.ModBiomes;
 import com.test_project.worldrep.ModAttachments;
 import com.test_project.worldrep.WorldReputationCommands;
@@ -24,6 +27,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -71,6 +75,8 @@ public class MainMod {
         modEventBus.addListener(this::commonSetup);
 
         LOGGER.info("MainMod успешно загружен!");
+        NeoForge.EVENT_BUS.register(CounterAttackEventHandler.class);
+        WeaponFeatureRegistry.register(new HammerSmashFeature());
     }
 
     // --- Методы-обработчики событий ---
@@ -83,6 +89,7 @@ public class MainMod {
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.STEEL);
             event.accept(ModItems.GONDOR_SWORD);
+            event.accept(ModItems.GONDOR_HAMMER);
             event.accept(ModItems.ORC_STEEL);
             event.accept(ModItems.TEST_MOB_SPAWN_EGG.get());
         }

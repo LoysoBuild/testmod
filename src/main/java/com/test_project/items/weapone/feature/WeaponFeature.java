@@ -18,6 +18,7 @@ public interface WeaponFeature {
      */
     default void onAttack(LivingEntity attacker, LivingEntity target, ItemStack stack) {}
 
+
     /**
      * Вызывается при успешном парировании.
      */
