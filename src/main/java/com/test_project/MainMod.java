@@ -1,6 +1,9 @@
 package com.test_project;
 
 import com.test_project.blocks.ModBlocks;
+import com.test_project.combat.combo.CombatEventHandler;
+import com.test_project.combat.combo.KeyBindings;
+import com.test_project.combat.stance.C2SToggleStancePacket;
 import com.test_project.entity.ModEntities;
 import com.test_project.entity.TestMobEntity;
 import com.test_project.faction.FactionAttachments;
@@ -9,28 +12,27 @@ import com.test_project.faction.FactionRegistry;
 import com.test_project.faction.factions_list.BanditFaction;
 import com.test_project.faction.factions_list.GondorFaction;
 import com.test_project.faction.factions_list.MordorFaction;
+import com.test_project.items.EquipmentEventHandler;
 import com.test_project.items.ModItems;
 import com.test_project.items.weapone.AttackRangeAttributes;
 import com.test_project.items.weapone.feature.CounterAttackEventHandler;
-import com.test_project.items.weapone.feature.WeaponFeatureRegistry;
 import com.test_project.world.biome.ModBiomes;
 import com.test_project.worldrep.ModAttachments;
 import com.test_project.worldrep.WorldReputationCommands;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -64,8 +66,12 @@ public class MainMod {
         // Регистрация креативных вкладок
         modEventBus.addListener(this::addCreative);
 
-        // Регистрация команд
+        // Регистрация KeyBindings и клиентских событий
+        modEventBus.addListener(KeyBindings::onRegisterKeys); // только для RegisterKeyMappingsEvent!
+        NeoForge.EVENT_BUS.addListener(KeyBindings::onClientTick); // только для ClientTickEvent!
 
+        // Регистрация клиентских мод-ивентов (например, FMLClientSetupEvent)
+        modEventBus.addListener(ClientModEvents::onClientSetup);
 
         // Регистрация конфигов (если есть)
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
@@ -73,11 +79,22 @@ public class MainMod {
         // Common setup
         modEventBus.addListener(this::commonSetup);
 
-        LOGGER.info("MainMod успешно загружен!");
+        // Регистрация игровых событий (game events)
         NeoForge.EVENT_BUS.register(CounterAttackEventHandler.class);
+        NeoForge.EVENT_BUS.register(CombatEventHandler.class);
+        NeoForge.EVENT_BUS.register(EquipmentEventHandler.class);
     }
 
-    // --- Методы-обработчики событий ---
+    // --- Регистрация пользовательских пакетов ---
+    @SubscribeEvent
+    public static void registerPayloads(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("mainmod"); // modid!
+        registrar.playToServer(
+                C2SToggleStancePacket.TYPE,
+                C2SToggleStancePacket.STREAM_CODEC,
+                C2SToggleStancePacket::handle
+        );
+    }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         LOGGER.debug("Выполняется commonSetup MainMod");
@@ -87,14 +104,6 @@ public class MainMod {
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.STEEL);
             event.accept(ModItems.GONDOR_SWORD);
-            event.accept(ModItems.GONDOR_HAMMER);
-            event.accept(ModItems.GONDOR_HALBERD);
-            event.accept(ModItems.GONDOR_DAGGER);
-            event.accept(ModItems.GONDOR_AXE);
-            event.accept(ModItems.GONDOR_LONGSWORD);
-            event.accept(ModItems.GONDOR_SPEAR);
-            event.accept(ModItems.GONDOR_WHIP);
-
             event.accept(ModItems.ORC_STEEL);
             event.accept(ModItems.TEST_MOB_SPAWN_EGG.get());
         }
@@ -113,21 +122,10 @@ public class MainMod {
         LOGGER.debug("Сервер стартует с MainMod");
     }
 
-    @EventBusSubscriber(modid = MainMod.MOD_ID)
-    public class CommandEvents {
-        @SubscribeEvent
-        public static void onRegisterCommands(RegisterCommandsEvent event) {
-            FactionCommands.register(event.getDispatcher());
-            WorldReputationCommands.register(event.getDispatcher());
-        }
-    }
-
-    // --- Клиентские события ---
-    @EventBusSubscriber(modid = MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents {
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-            // Клиентская инициализация
-        }
+    // --- Регистрация команд ---
+    @SubscribeEvent
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
+        FactionCommands.register(event.getDispatcher());
+        WorldReputationCommands.register(event.getDispatcher());
     }
 }
