@@ -33,6 +33,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import software.bernie.geckolib.GeckoLib;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -44,13 +45,11 @@ public class MainMod {
 
     public MainMod(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Загрузка MainMod...");
-
         // Регистрация биомов, предметов, блоков, сущностей
         ModBiomes.register(modEventBus);
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModEntities.register(modEventBus);
-
         // Регистрация фракций и Data Attachments
         FactionRegistry.register(new GondorFaction());
         FactionRegistry.register(new MordorFaction());
