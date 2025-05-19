@@ -33,6 +33,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import software.bernie.geckolib.GeckoLib;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
