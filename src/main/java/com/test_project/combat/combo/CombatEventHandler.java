@@ -1,4 +1,5 @@
 package com.test_project.combat.combo;
+
 import com.test_project.combat.PlayerCombatSettings;
 import com.test_project.combat.stance.StanceType;
 import net.minecraft.world.entity.LivingEntity;
@@ -6,6 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 
@@ -24,6 +26,15 @@ public final class CombatEventHandler {
             settings.setCombo(StanceType.DEFENSE, "sword_smah_combo");
             return settings;
         });
+    }
+
+    // Обработка кулдауна между переключениями стоек
+    @SubscribeEvent
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (!event.getEntity().level().isClientSide) {
+            PlayerCombatSettings settings = getSettings(event.getEntity());
+            settings.tickCooldown();
+        }
     }
 
     @SubscribeEvent

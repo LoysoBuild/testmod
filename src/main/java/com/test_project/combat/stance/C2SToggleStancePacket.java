@@ -6,7 +6,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.codec.StreamCodec;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import com.test_project.combat.stance.StanceType;
 import com.test_project.combat.PlayerCombatSettings;
 
 import net.minecraft.world.entity.player.Player;
@@ -31,10 +30,18 @@ public record C2SToggleStancePacket() implements CustomPacketPayload {
             Player player = ctx.player();
             if (player instanceof ServerPlayer serverPlayer) {
                 PlayerCombatSettings settings = CombatEventHandler.getSettings(serverPlayer);
+                // Проверка кулдауна: если кулдаун еще идет, не переключаем стойку
+                if (settings.isStanceCooldown()) {
+                    serverPlayer.sendSystemMessage(
+                            Component.literal("Стойку можно сменить только после кулдауна!")
+                    );
+                    return;
+                }
                 StanceType next = settings.getCurrentStance() == StanceType.ATTACK
                         ? StanceType.DEFENSE
                         : StanceType.ATTACK;
                 settings.setCurrentStance(next);
+                settings.setStanceCooldown(40); // 2 секунды кулдаун (40 тиков)
                 serverPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1));
                 serverPlayer.sendSystemMessage(
                         Component.literal("Стойка переключена: " + (next == StanceType.ATTACK ? "Атака" : "Защита"))

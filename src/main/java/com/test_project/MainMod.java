@@ -36,6 +36,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
+
 @Mod(MainMod.MOD_ID)
 public class MainMod {
     public static final String MOD_ID = "mainmod";
@@ -83,12 +84,13 @@ public class MainMod {
         NeoForge.EVENT_BUS.register(CounterAttackEventHandler.class);
         NeoForge.EVENT_BUS.register(CombatEventHandler.class);
         NeoForge.EVENT_BUS.register(EquipmentEventHandler.class);
+        modEventBus.addListener(MainMod::registerPayloads);
     }
 
     // --- Регистрация пользовательских пакетов ---
     @SubscribeEvent
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("mainmod"); // modid!
+        PayloadRegistrar registrar = event.registrar("mainmod"); // modid должен совпадать!
         registrar.playToServer(
                 C2SToggleStancePacket.TYPE,
                 C2SToggleStancePacket.STREAM_CODEC,
