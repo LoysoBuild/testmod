@@ -44,13 +44,11 @@ public class MainMod {
 
     public MainMod(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Загрузка MainMod...");
-
         // Регистрация биомов, предметов, блоков, сущностей
         ModBiomes.register(modEventBus);
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModEntities.register(modEventBus);
-
         // Регистрация фракций и Data Attachments
         FactionRegistry.register(new GondorFaction());
         FactionRegistry.register(new MordorFaction());
