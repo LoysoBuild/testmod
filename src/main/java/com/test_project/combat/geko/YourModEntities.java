@@ -7,11 +7,14 @@ import net.minecraft.world.entity.MobCategory;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
-import com.test_project.combat.geko.PlayerAnimatable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class YourModEntities {
+    private static final Logger LOGGER = LoggerFactory.getLogger(YourModEntities.class);
+
     public static final DeferredRegister<EntityType<?>> ENTITIES =
-            DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, "yourmodid");
+            DeferredRegister.create(BuiltInRegistries.ENTITY_TYPE, "mainmod");
 
     public static final DeferredHolder<EntityType<?>, EntityType<PlayerAnimatable>> PLAYER_ANIMATABLE =
             ENTITIES.register("player_animatable",
@@ -21,6 +24,7 @@ public class YourModEntities {
             );
 
     public static void register(IEventBus modEventBus) {
+        LOGGER.info("Registering YourModEntities");
         ENTITIES.register(modEventBus);
     }
 }

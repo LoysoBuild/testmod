@@ -3,9 +3,12 @@ package com.test_project;
 import com.test_project.blocks.ModBlocks;
 import com.test_project.combat.combo.CombatEventHandler;
 import com.test_project.combat.combo.KeyBindings;
+import com.test_project.combat.geko.CombatCapabilities;
 import com.test_project.combat.geko.PlayerAnimatable;
 import com.test_project.combat.geko.YourModEntities;
 import com.test_project.combat.stance.C2SToggleStancePacket;
+
+import com.test_project.combat.PlayerCombatSettings;
 import com.test_project.entity.ModEntities;
 import com.test_project.entity.TestMobEntity;
 import com.test_project.faction.FactionAttachments;
@@ -21,24 +24,27 @@ import com.test_project.items.weapone.feature.CounterAttackEventHandler;
 import com.test_project.world.biome.ModBiomes;
 import com.test_project.worldrep.ModAttachments;
 import com.test_project.worldrep.WorldReputationCommands;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import software.bernie.geckolib.GeckoLib;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
-
+import software.bernie.geckolib.GeckoLib;
 
 @Mod(MainMod.MOD_ID)
 public class MainMod {
@@ -47,19 +53,25 @@ public class MainMod {
 
     public MainMod(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Загрузка MainMod...");
+
+        // Регистрация capability CombatCapabilities
+        modEventBus.addListener(this::registerCapabilities);
+
+        // Регистрация сущностей и атрибутов
         YourModEntities.register(modEventBus);
         modEventBus.addListener(this::onEntityAttributeCreation);
+
         // Регистрация биомов, предметов, блоков, сущностей
         ModBiomes.register(modEventBus);
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModEntities.register(modEventBus);
+
         // Регистрация фракций и Data Attachments
         FactionRegistry.register(new GondorFaction());
         FactionRegistry.register(new MordorFaction());
         FactionRegistry.register(new BanditFaction());
         FactionAttachments.register(modEventBus);
-
 
         // Регистрация мировой репутации (AttachmentType)
         ModAttachments.register(modEventBus);
@@ -92,6 +104,16 @@ public class MainMod {
         modEventBus.addListener(MainMod::registerPayloads);
     }
 
+    // --- Регистрация capability CombatCapabilities ---
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerEntity(
+                CombatCapabilities.PLAYER_COMBAT,
+                EntityType.PLAYER,
+                (player, ctx) -> new PlayerCombatSettings()
+        );
+        LOGGER.info("CombatCapabilities.PLAYER_COMBAT capability registered for EntityType.PLAYER");
+    }
+
     // --- Регистрация пользовательских пакетов ---
     @SubscribeEvent
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -106,13 +128,15 @@ public class MainMod {
     private void commonSetup(final FMLCommonSetupEvent event) {
         LOGGER.debug("Выполняется commonSetup MainMod");
     }
+
     private void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
-        // Используйте только .get() здесь — DeferredHolder уже инициализирован к этому моменту!
+        LOGGER.info("Registering attributes for PlayerAnimatable");
         event.put(
                 YourModEntities.PLAYER_ANIMATABLE.get(),
                 PlayerAnimatable.createAttributes().build()
         );
     }
+
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {

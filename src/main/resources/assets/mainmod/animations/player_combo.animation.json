@@ -1,7 +1,7 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
-		"Idle": {
+		"idle_attack": {
 			"animation_length": 10,
 			"bones": {
 				"Head": {
