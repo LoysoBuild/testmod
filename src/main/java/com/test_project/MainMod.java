@@ -3,6 +3,8 @@ package com.test_project;
 import com.test_project.blocks.ModBlocks;
 import com.test_project.combat.combo.CombatEventHandler;
 import com.test_project.combat.combo.KeyBindings;
+import com.test_project.combat.geko.PlayerAnimatable;
+import com.test_project.combat.geko.YourModEntities;
 import com.test_project.combat.stance.C2SToggleStancePacket;
 import com.test_project.entity.ModEntities;
 import com.test_project.entity.TestMobEntity;
@@ -45,6 +47,8 @@ public class MainMod {
 
     public MainMod(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("Загрузка MainMod...");
+        YourModEntities.register(modEventBus);
+        modEventBus.addListener(this::onEntityAttributeCreation);
         // Регистрация биомов, предметов, блоков, сущностей
         ModBiomes.register(modEventBus);
         ModItems.register(modEventBus);
@@ -55,6 +59,7 @@ public class MainMod {
         FactionRegistry.register(new MordorFaction());
         FactionRegistry.register(new BanditFaction());
         FactionAttachments.register(modEventBus);
+
 
         // Регистрация мировой репутации (AttachmentType)
         ModAttachments.register(modEventBus);
@@ -68,6 +73,7 @@ public class MainMod {
 
         // Регистрация KeyBindings и клиентских событий
         modEventBus.addListener(KeyBindings::onRegisterKeys); // только для RegisterKeyMappingsEvent!
+        modEventBus.addListener(ClientModEvents::onRegisterRenderers);
         NeoForge.EVENT_BUS.addListener(KeyBindings::onClientTick); // только для ClientTickEvent!
 
         // Регистрация клиентских мод-ивентов (например, FMLClientSetupEvent)
@@ -99,6 +105,13 @@ public class MainMod {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         LOGGER.debug("Выполняется commonSetup MainMod");
+    }
+    private void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+        // Используйте только .get() здесь — DeferredHolder уже инициализирован к этому моменту!
+        event.put(
+                YourModEntities.PLAYER_ANIMATABLE.get(),
+                PlayerAnimatable.createAttributes().build()
+        );
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
