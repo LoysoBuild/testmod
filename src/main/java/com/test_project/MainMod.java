@@ -1,80 +1,169 @@
 package com.test_project;
 
 import com.test_project.blocks.ModBlocks;
+import com.test_project.combat.combo.CombatEventHandler;
+import com.test_project.combat.combo.KeyBindings;
+import com.test_project.combat.geko.CombatCapabilities;
+import com.test_project.combat.geko.PlayerAnimatable;
+import com.test_project.combat.geko.YourModEntities;
+import com.test_project.combat.stance.C2SToggleStancePacket;
+
+import com.test_project.combat.PlayerCombatSettings;
+import com.test_project.entity.ModEntities;
+import com.test_project.entity.TestMobEntity;
+import com.test_project.faction.FactionAttachments;
+import com.test_project.faction.FactionCommands;
+import com.test_project.faction.FactionRegistry;
+import com.test_project.faction.factions_list.BanditFaction;
+import com.test_project.faction.factions_list.GondorFaction;
+import com.test_project.faction.factions_list.MordorFaction;
+import com.test_project.items.EquipmentEventHandler;
 import com.test_project.items.ModItems;
+import com.test_project.items.weapone.AttackRangeAttributes;
+import com.test_project.items.weapone.feature.CounterAttackEventHandler;
+import com.test_project.world.biome.ModBiomes;
+import com.test_project.worldrep.ModAttachments;
+import com.test_project.worldrep.WorldReputationCommands;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.CreativeModeTabs;
-import org.slf4j.Logger;
-
-import com.mojang.logging.LogUtils;
-
-import net.neoforged.api.distmarker.Dist;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
-// The value here should match an entry in the META-INF/neoforge.mods.toml file
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import org.slf4j.Logger;
+import com.mojang.logging.LogUtils;
+import software.bernie.geckolib.GeckoLib;
+
 @Mod(MainMod.MOD_ID)
 public class MainMod {
     public static final String MOD_ID = "mainmod";
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    // The constructor for the mod class is the first code that is run when your mod is loaded.
-    // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public MainMod(IEventBus modEventBus, ModContainer modContainer) {
-        // Register the commonSetup method for modloading
-        modEventBus.addListener(this::commonSetup);
+        LOGGER.info("Загрузка MainMod...");
 
-        // Register ourselves for server and other game events we are interested in.
-        // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.
-        // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
-        NeoForge.EVENT_BUS.register(this);
+        // Регистрация capability CombatCapabilities
+        modEventBus.addListener(this::registerCapabilities);
 
+        // Регистрация сущностей и атрибутов
+        YourModEntities.register(modEventBus);
+        modEventBus.addListener(this::onEntityAttributeCreation);
+
+        // Регистрация биомов, предметов, блоков, сущностей
+        ModBiomes.register(modEventBus);
         ModItems.register(modEventBus);
         ModBlocks.register(modEventBus);
+        ModEntities.register(modEventBus);
 
-        // Register the item to a creative tab
+        // Регистрация фракций и Data Attachments
+        FactionRegistry.register(new GondorFaction());
+        FactionRegistry.register(new MordorFaction());
+        FactionRegistry.register(new BanditFaction());
+        FactionAttachments.register(modEventBus);
+
+        // Регистрация мировой репутации (AttachmentType)
+        ModAttachments.register(modEventBus);
+
+        // Регистрация атрибутов сущностей
+        AttackRangeAttributes.ATTRIBUTES.register(modEventBus);
+        modEventBus.addListener(this::registerAttributes);
+
+        // Регистрация креативных вкладок
         modEventBus.addListener(this::addCreative);
-        // Register our mod's ModConfigSpec so that FML can create and load the config file for us
+
+        // Регистрация KeyBindings и клиентских событий
+        modEventBus.addListener(KeyBindings::onRegisterKeys); // только для RegisterKeyMappingsEvent!
+        modEventBus.addListener(ClientModEvents::onRegisterRenderers);
+        NeoForge.EVENT_BUS.addListener(KeyBindings::onClientTick); // только для ClientTickEvent!
+
+        // Регистрация клиентских мод-ивентов (например, FMLClientSetupEvent)
+        modEventBus.addListener(ClientModEvents::onClientSetup);
+
+        // Регистрация конфигов (если есть)
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
+        // Common setup
+        modEventBus.addListener(this::commonSetup);
+
+        // Регистрация игровых событий (game events)
+        NeoForge.EVENT_BUS.register(CounterAttackEventHandler.class);
+        NeoForge.EVENT_BUS.register(CombatEventHandler.class);
+        NeoForge.EVENT_BUS.register(EquipmentEventHandler.class);
+        modEventBus.addListener(MainMod::registerPayloads);
+    }
+
+    // --- Регистрация capability CombatCapabilities ---
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerEntity(
+                CombatCapabilities.PLAYER_COMBAT,
+                EntityType.PLAYER,
+                (player, ctx) -> new PlayerCombatSettings()
+        );
+        LOGGER.info("CombatCapabilities.PLAYER_COMBAT capability registered for EntityType.PLAYER");
+    }
+
+    // --- Регистрация пользовательских пакетов ---
+    @SubscribeEvent
+    public static void registerPayloads(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar("mainmod"); // modid должен совпадать!
+        registrar.playToServer(
+                C2SToggleStancePacket.TYPE,
+                C2SToggleStancePacket.STREAM_CODEC,
+                C2SToggleStancePacket::handle
+        );
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-
+        LOGGER.debug("Выполняется commonSetup MainMod");
     }
 
-    // Add the example block item to the building blocks tab
-    private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        if(event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
-            event.accept(ModItems.STEEL);
-            event.accept(ModItems.ORC_STEEL);
-        }
+    private void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+        LOGGER.info("Registering attributes for PlayerAnimatable");
+        event.put(
+                YourModEntities.PLAYER_ANIMATABLE.get(),
+                PlayerAnimatable.createAttributes().build()
+        );
+    }
 
-        if(event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
+
+    private void addCreative(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+            event.accept(ModItems.STEEL);
+            event.accept(ModItems.GONDOR_SWORD);
+            event.accept(ModItems.ORC_STEEL);
+            event.accept(ModItems.TEST_MOB_SPAWN_EGG.get());
+        }
+        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(ModBlocks.STEEL_BLOCK);
             event.accept(ModBlocks.STEEL_ORE);
         }
     }
 
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-
+    private void registerAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.TEST_MOB.get(), TestMobEntity.createAttributes().build());
     }
 
-    // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
-    @EventBusSubscriber(modid = MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents {
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
+    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {
+        LOGGER.debug("Сервер стартует с MainMod");
+    }
 
-        }
+    // --- Регистрация команд ---
+    @SubscribeEvent
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
+        FactionCommands.register(event.getDispatcher());
+        WorldReputationCommands.register(event.getDispatcher());
     }
 }

@@ -1,0 +1,13 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "mainmod:custom_plains",
+  "spawners": [
+    {
+      "type": "mainmod:test_mob",
+      "weight": 10,
+      "min_count": 1,
+      "max_count": 3,
+      "category": "creature"
+    }
+  ]
+}
