@@ -22,8 +22,8 @@ repositories {
         url 'https://maven.kosmx.dev/'
     }
     maven {
-        name "zigythebirdMods"
-        url "https://maven.zigytb.dev/releases"
+        name = "zigythebirdMods"
+        url = "https://maven.zigythebird.com/mods"
     }
     mavenLocal()
 }
@@ -121,7 +121,8 @@ configurations {
 
 dependencies {
     implementation "dev.kosmx.player-anim:player-animation-lib-forge:2.0.1+1.21.1"
-    implementation "dev.zigy.playeranimatorapi:playeranimatorapi-neoforge-1.21:2.2.1"
+    implementation "com.zigythebird.playeranimatorapi:playeranimatorapi-neoforge-1.21:2.3.0"
+
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
