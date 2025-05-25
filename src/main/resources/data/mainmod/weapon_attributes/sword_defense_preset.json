@@ -1,0 +1,14 @@
+{
+  "parent": "bettercombat:longsword",
+  "attributes": {
+    "attack_range": 2.0,
+    "attacks": [
+      {
+        "animation": "mainmod:sword_defense_idle",
+        "damage_multiplier": 0.7,
+        "angle": 80,
+        "hitbox": "HORIZONTAL_PLANE"
+      }
+    ]
+  }
+}
