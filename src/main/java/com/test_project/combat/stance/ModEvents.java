@@ -1,6 +1,5 @@
 package com.test_project.combat.stance;
 
-import com.test_project.combat.stance.NetworkManager;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;

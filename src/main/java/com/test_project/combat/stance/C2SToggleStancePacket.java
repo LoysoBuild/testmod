@@ -12,6 +12,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.ItemStack;
 
 public record C2SToggleStancePacket() implements CustomPacketPayload {
     public static final Type<C2SToggleStancePacket> TYPE =
@@ -42,6 +46,22 @@ public record C2SToggleStancePacket() implements CustomPacketPayload {
                 serverPlayer.sendSystemMessage(
                         Component.literal("Стойка переключена: " + (next == StanceType.ATTACK ? "Атака" : "Защита"))
                 );
+
+                // Смена preset_id у меча для Better Combat через ResourceLocation!
+                ItemStack stack = serverPlayer.getMainHandItem();
+                if (!stack.isEmpty()) {
+                    Registry<DataComponentType<?>> registry = serverPlayer.level().registryAccess().registryOrThrow(Registries.DATA_COMPONENT_TYPE);
+                    @SuppressWarnings("unchecked")
+                    DataComponentType<ResourceLocation> PRESET_ID_COMPONENT =
+                            (DataComponentType<ResourceLocation>) registry.get(ResourceLocation.fromNamespaceAndPath("bettercombat", "preset_id"));
+                    if (PRESET_ID_COMPONENT != null) {
+                        ResourceLocation presetId = next == StanceType.ATTACK
+                                ?  ResourceLocation.fromNamespaceAndPath("mainmod", "sword_attack_preset")
+                                :  ResourceLocation.fromNamespaceAndPath("mainmod", "sword_defense_preset");
+                        stack.set(PRESET_ID_COMPONENT, presetId);
+                    }
+                }
+
                 // Отправляем клиентский пакет для проигрывания анимации
                 NetworkManager.sendToPlayer(new S2CPlayStanceAnimationPacket(next), serverPlayer);
             }
