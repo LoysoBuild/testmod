@@ -3,6 +3,7 @@ package com.test_project.items;
 import com.test_project.MainMod;
 import com.test_project.entity.ModEntities;
 import com.test_project.items.weapone.feature.WeaponFeatureSet;
+import com.test_project.items.weapone.weaponeclass.ModBattleAxe;
 import com.test_project.items.weapone.weaponeclass.ModSword;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
@@ -47,6 +48,21 @@ public class ModItems {
             ),
             new Item.Properties().stacksTo(1).durability(2031)
     );
+
+    public static final DeferredItem<ModBattleAxe> GONDOR_AXE = ITEMS.register(
+            "gondor_axe",
+            () -> new ModBattleAxe(
+                    Tiers.NETHERITE,     // материал
+                    5.0F,                // урон
+                    -2.4F,               // скорость атаки
+                    2031,                // прочность
+                    3.0,                 // дальность атаки
+                    new WeaponFeatureSet().add("counterattack"), // особенности
+                    "sword_smah_combo"   // defaultComboId
+            )
+    );
+
+
 
     /** Вызывается из основного класса мода для регистрации на шину событий. */
     public static void register(IEventBus eventBus) {

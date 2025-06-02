@@ -4,8 +4,8 @@ import com.test_project.items.weapone.AbstractWeapon;
 import com.test_project.items.weapone.feature.WeaponFeatureSet;
 import net.minecraft.world.item.Tier;
 
-public class ModSword extends AbstractWeapon {
-    public ModSword(
+public class ModBattleAxe extends AbstractWeapon {
+    public ModBattleAxe(
             Tier tier,
             float attackDamage,
             float attackSpeed,

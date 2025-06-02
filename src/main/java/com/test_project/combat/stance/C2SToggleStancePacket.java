@@ -12,14 +12,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.network.chat.Component;
-import net.minecraft.core.Registry;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.ItemStack;
 
 public record C2SToggleStancePacket() implements CustomPacketPayload {
+
     public static final Type<C2SToggleStancePacket> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath("mainmod", "toggle_stance"));
+
     public static final StreamCodec<FriendlyByteBuf, C2SToggleStancePacket> STREAM_CODEC =
             StreamCodec.unit(new C2SToggleStancePacket());
 
@@ -31,39 +30,42 @@ public record C2SToggleStancePacket() implements CustomPacketPayload {
     public static void handle(final C2SToggleStancePacket pkt, final IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             Player player = ctx.player();
-            if (player instanceof ServerPlayer serverPlayer) {
-                PlayerCombatSettings settings = CombatEventHandler.getSettings(serverPlayer);
-                if (settings.isStanceCooldown()) {
-                    serverPlayer.sendSystemMessage(Component.literal("Стойку можно сменить только после кулдауна!"));
-                    return;
-                }
-                StanceType next = settings.getCurrentStance() == StanceType.ATTACK
-                        ? StanceType.DEFENSE
-                        : StanceType.ATTACK;
-                settings.setCurrentStance(next);
-                settings.setStanceCooldown(40);
-                serverPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1));
-                serverPlayer.sendSystemMessage(
-                        Component.literal("Стойка переключена: " + (next == StanceType.ATTACK ? "Атака" : "Защита"))
-                );
+            if (!(player instanceof ServerPlayer serverPlayer)) return;
 
-                // Смена preset_id у меча для Better Combat через ResourceLocation!
-                ItemStack stack = serverPlayer.getMainHandItem();
-                if (!stack.isEmpty()) {
-                    Registry<DataComponentType<?>> registry = serverPlayer.level().registryAccess().registryOrThrow(Registries.DATA_COMPONENT_TYPE);
-                    @SuppressWarnings("unchecked")
-                    DataComponentType<ResourceLocation> PRESET_ID_COMPONENT =
-                            (DataComponentType<ResourceLocation>) registry.get(ResourceLocation.fromNamespaceAndPath("bettercombat", "preset_id"));
-                    if (PRESET_ID_COMPONENT != null) {
-                        ResourceLocation presetId = next == StanceType.ATTACK
-                                ?  ResourceLocation.fromNamespaceAndPath("mainmod", "sword_attack_preset")
-                                :  ResourceLocation.fromNamespaceAndPath("mainmod", "sword_defense_preset");
-                        stack.set(PRESET_ID_COMPONENT, presetId);
-                    }
-                }
+            PlayerCombatSettings settings = CombatEventHandler.getSettings(serverPlayer);
 
-                // Отправляем клиентский пакет для проигрывания анимации
+            // Проверка кулдауна
+            if (settings.isStanceCooldown()) {
+                serverPlayer.sendSystemMessage(Component.literal("§c⏰ Стойку можно сменить только после кулдауна!"));
+                return;
+            }
+
+            // Переключение стойки
+            StanceType next = settings.getCurrentStance() == StanceType.ATTACK
+                    ? StanceType.DEFENSE
+                    : StanceType.ATTACK;
+
+            settings.setCurrentStance(next);
+            settings.setStanceCooldown(40); // 2 секунды
+
+            // Эффекты переключения
+            serverPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1));
+
+            // Уведомление игроку
+            String stanceName = next == StanceType.ATTACK ? "§c⚔ Атака" : "§9🛡 Защита";
+            serverPlayer.sendSystemMessage(Component.literal("§e✨ Стойка переключена: " + stanceName));
+
+            // Смена пресета оружия
+            ItemStack stack = serverPlayer.getMainHandItem();
+            if (!stack.isEmpty() && WeaponPresetHelper.isWeaponSupported(stack)) {
+                WeaponPresetHelper.setPresetForItem(stack, next, serverPlayer);
+            }
+
+            // Отправка пакета анимации на клиент
+            try {
                 NetworkManager.sendToPlayer(new S2CPlayStanceAnimationPacket(next), serverPlayer);
+            } catch (Exception e) {
+                System.err.println("Failed to send stance animation packet: " + e.getMessage());
             }
         });
     }

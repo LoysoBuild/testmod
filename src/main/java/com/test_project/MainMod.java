@@ -106,6 +106,7 @@ public class MainMod {
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(ModItems.STEEL);
             event.accept(ModItems.GONDOR_SWORD);
+            event.accept(ModItems.GONDOR_AXE);
             event.accept(ModItems.ORC_STEEL);
             event.accept(ModItems.TEST_MOB_SPAWN_EGG.get());
         }

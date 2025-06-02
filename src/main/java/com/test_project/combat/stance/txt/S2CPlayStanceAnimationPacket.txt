@@ -9,7 +9,6 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.client.player.LocalPlayer;
 
 public record S2CPlayStanceAnimationPacket(StanceType stance) implements CustomPacketPayload {
-
     public static final CustomPacketPayload.Type<S2CPlayStanceAnimationPacket> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("mainmod", "play_stance_animation"));
 

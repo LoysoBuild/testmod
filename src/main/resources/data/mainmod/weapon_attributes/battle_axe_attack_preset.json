@@ -1,0 +1,32 @@
+{
+  "attributes": {
+    "attack_range": 3.0,
+    "idle_animation": "mainmod:idle_axe_attack.json",
+    "attacks": [
+      {
+        "animation": "mainmod:first_axe_attack",
+        "damage_multiplier": 1.0,
+        "angle": 100,
+        "upswing": 0.3,
+        "hitbox": "HORIZONTAL_PLANE",
+        "swing_sound": { "id": "mainmod:sword_swing1" }
+      },
+      {
+        "animation": "mainmod:next_axe_attack",
+        "damage_multiplier": 1.2,
+        "angle": 120,
+        "upswing": 0.35,
+        "hitbox": "HORIZONTAL_PLANE",
+        "swing_sound": { "id": "mainmod:sword_swing2" }
+      },
+      {
+        "animation": "mainmod:end_axe_attack",
+        "damage_multiplier": 1.5,
+        "angle": 60,
+        "upswing": 0.4,
+        "hitbox": "FORWARD_BOX",
+        "swing_sound": { "id": "mainmod:sword_thrust" }
+      }
+    ]
+  }
+}
