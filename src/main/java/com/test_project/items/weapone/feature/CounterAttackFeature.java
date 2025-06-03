@@ -4,6 +4,7 @@ import com.test_project.combat.PlayerCombatSettings;
 import com.test_project.combat.combo.CombatEventHandler;
 import com.test_project.combat.stance.StanceType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -128,14 +129,22 @@ public class CounterAttackFeature implements WeaponFeature {
     }
 
     private float getWeaponBaseDamage(ItemStack weaponStack) {
-        // Получаем базовый урон оружия из атрибутов
-        var attributes = weaponStack.getAttributeModifiers();
-        return attributes.modifiers().values().stream()
-                .filter(modifier -> modifier.attribute().equals(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE))
-                .map(modifier -> (float) modifier.modifier().amount())
-                .findFirst()
-                .orElse(4.0f); // Дефолтный урон если не найден
+        // Сначала ищем модификатор урона атаки через новую систему атрибутов
+        var attributeModifiers = weaponStack.getAttributeModifiers();
+        for (var entry : attributeModifiers.modifiers()) {
+            if (entry.attribute().equals(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)) {
+                return (float) entry.modifier().amount();
+            }
+        }
+        // Фолбэк для ванильных мечей (и топоров): теперь getDamage требует ItemStack
+        var item = weaponStack.getItem();
+        if (item instanceof net.minecraft.world.item.SwordItem swordItem) {
+            return swordItem.getDamage(weaponStack);
+        }
+        // Дефолтный урон для всего остального
+        return 4.0f;
     }
+
 
     private void applyCounterEffects(ServerPlayer defender, LivingEntity attacker, ItemStack weaponStack) {
         // Эффекты для атакующего
