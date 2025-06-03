@@ -6,6 +6,7 @@ import com.test_project.combat.stance.KeyBindings;
 import com.test_project.combat.stance.NetworkManager;
 import com.test_project.entity.ModEntities;
 import com.test_project.entity.TestMobEntity;
+import com.test_project.entity.list.MirrorPlayerEntity;
 import com.test_project.faction.FactionAttachments;
 import com.test_project.faction.FactionCommands;
 import com.test_project.faction.FactionRegistry;
@@ -80,6 +81,7 @@ public class MainMod {
         NeoForge.EVENT_BUS.register(CombatEventHandler.class);
         NeoForge.EVENT_BUS.register(EquipmentEventHandler.class);
         modEventBus.addListener(NetworkManager::registerPackets);
+        modEventBus.addListener(this::entityAttributes);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -93,6 +95,7 @@ public class MainMod {
             event.accept(ModItems.GONDOR_AXE);
             event.accept(ModItems.ORC_STEEL);
             event.accept(ModItems.TEST_MOB_SPAWN_EGG.get());
+            event.accept(ModItems.MIRROR_PLAYER_SPAWN_EGG.get());
         }
         if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(ModBlocks.STEEL_BLOCK);
@@ -102,6 +105,10 @@ public class MainMod {
 
     private void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(ModEntities.TEST_MOB.get(), TestMobEntity.createAttributes().build());
+    }
+
+    private void entityAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.MIRROR_PLAYER.get(), MirrorPlayerEntity.createAttributes().build());
     }
 
     @SubscribeEvent

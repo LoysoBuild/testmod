@@ -26,6 +26,14 @@ public class ModItems {
                             new Item.Properties()
                     )
             );
+    public static final DeferredHolder<Item, SpawnEggItem> MIRROR_PLAYER_SPAWN_EGG =
+            ITEMS.register("mirror_player_spawn_egg", () ->
+                    new SpawnEggItem(
+                            ModEntities.MIRROR_PLAYER.get(),
+                            0x4A4A4A, 0x8B4513, // Серый с коричневым
+                            new Item.Properties()
+                    )
+            );
 
     // Простые материалы
     public static final DeferredItem<Item> STEEL = ITEMS.register("steel",
