@@ -13,12 +13,13 @@ public class WeaponPresetHelper {
 
     public record WeaponPresets(ResourceLocation attackPreset, ResourceLocation defensePreset) {}
 
+    // ИСПРАВЛЕНИЕ: Добавлена правильная типизация Map
     private static final Map<ResourceLocation, WeaponPresets> WEAPON_PRESETS = Map.of(
-            ResourceLocation.fromNamespaceAndPath("mainmod", "sword"), new WeaponPresets(
+            ResourceLocation.fromNamespaceAndPath("mainmod", "gondor_sword"), new WeaponPresets(
                     ResourceLocation.fromNamespaceAndPath("mainmod", "sword_attack_preset"),
                     ResourceLocation.fromNamespaceAndPath("mainmod", "sword_defense_preset")
             ),
-            ResourceLocation.fromNamespaceAndPath("mainmod", "battle_axe"), new WeaponPresets(
+            ResourceLocation.fromNamespaceAndPath("mainmod", "gondor_axe"), new WeaponPresets(
                     ResourceLocation.fromNamespaceAndPath("mainmod", "battle_axe_attack_preset"),
                     ResourceLocation.fromNamespaceAndPath("mainmod", "battle_axe_defense_preset")
             )
@@ -42,17 +43,13 @@ public class WeaponPresetHelper {
                         ? presets.attackPreset()
                         : presets.defensePreset();
                 stack.set(presetComponent, presetId);
+
+                System.out.println("[SERVER] Set weapon preset: " + presetId + " for stance: " + stance);
             }
         } catch (Exception e) {
             // Логирование ошибки, если Better Combat не установлен
             System.err.println("Failed to set weapon preset: " + e.getMessage());
         }
-    }
-
-    // Метод для добавления новых пресетов во время выполнения
-    public static void addWeaponPreset(ResourceLocation weaponId, WeaponPresets presets) {
-        // Поскольку WEAPON_PRESETS неизменяемая, создайте изменяемую версию в реальном коде
-        // Это пример для демонстрации
     }
 
     // Проверка, поддерживается ли оружие

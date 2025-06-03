@@ -1,6 +1,5 @@
-package com.test_project.combat.combo;
+package com.test_project.combat.stance;
 
-import com.test_project.combat.stance.C2SToggleStancePacket;
 import net.minecraft.client.KeyMapping;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;

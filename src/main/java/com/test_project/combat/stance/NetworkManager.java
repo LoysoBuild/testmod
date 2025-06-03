@@ -22,6 +22,8 @@ public class NetworkManager {
                 C2SToggleStancePacket.STREAM_CODEC,
                 C2SToggleStancePacket::handle
         );
+
+        System.out.println("[NETWORK] Registered stance packets successfully");
     }
 
     public static void sendToPlayer(S2CPlayStanceAnimationPacket packet, ServerPlayer player) {

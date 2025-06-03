@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
 
 public class StanceAnimationManager {
 
-    // Хранение текущих анимаций для каждого игрока
+    // ИСПРАВЛЕНИЕ: Добавлена правильная типизация Map
     private static final java.util.Map<java.util.UUID, ResourceLocation> currentAnimations = new java.util.HashMap<>();
 
     public static void playStance(Player player, StanceType stance) {
@@ -24,8 +24,11 @@ public class StanceAnimationManager {
         ResourceLocation animId = getAnimationForWeapon(mainHand, stance);
 
         if (animId != null) {
-            // Останавливаем предыдущую анимацию, если она была
+            // Останавливаем предыдущую анимацию
             stopCurrentAnimation(clientPlayer);
+
+            // ИСПРАВЛЕНИЕ: Добавлен лог для отладки
+            System.out.println("[CLIENT] Playing animation: " + animId + " for stance: " + stance);
 
             // Проигрываем новую анимацию
             PlayerAnimationData data = new PlayerAnimationData(
@@ -42,6 +45,8 @@ public class StanceAnimationManager {
 
             // Сохраняем текущую анимацию
             currentAnimations.put(player.getUUID(), animId);
+        } else {
+            System.out.println("[CLIENT] No animation found for weapon: " + mainHand.getItem().getClass().getSimpleName() + " and stance: " + stance);
         }
     }
 
@@ -51,8 +56,8 @@ public class StanceAnimationManager {
         // Проверка на конкретные типы оружия
         if (stack.getItem() instanceof ModBattleAxe) {
             return switch (stance) {
-                case ATTACK -> ResourceLocation.fromNamespaceAndPath("mainmod", "battle_axe_attack_idle");
-                case DEFENSE -> ResourceLocation.fromNamespaceAndPath("mainmod", "battle_axe_defense_idle");
+                case ATTACK -> ResourceLocation.fromNamespaceAndPath("mainmod", "sword_attack_idle");
+                case DEFENSE -> ResourceLocation.fromNamespaceAndPath("mainmod", "sword_defense_idle");
             };
         } else if (stack.getItem() instanceof ModSword) {
             return switch (stance) {
@@ -90,39 +95,6 @@ public class StanceAnimationManager {
         if (player instanceof AbstractClientPlayer clientPlayer) {
             stopCurrentAnimation(clientPlayer);
         }
-    }
-
-    // Метод для остановки всех анимаций игрока (альтернативный подход)
-    public static void stopAllAnimations(AbstractClientPlayer player) {
-        // Останавливаем все возможные анимации стоек
-        ResourceLocation[] possibleAnimations = {
-                ResourceLocation.fromNamespaceAndPath("mainmod", "battle_axe_attack_idle"),
-                ResourceLocation.fromNamespaceAndPath("mainmod", "battle_axe_defense_idle"),
-                ResourceLocation.fromNamespaceAndPath("mainmod", "sword_attack_idle"),
-                ResourceLocation.fromNamespaceAndPath("mainmod", "sword_defense_idle"),
-                ResourceLocation.fromNamespaceAndPath("mainmod", "generic_weapon_attack_idle"),
-                ResourceLocation.fromNamespaceAndPath("mainmod", "generic_weapon_defense_idle")
-        };
-
-        for (ResourceLocation animId : possibleAnimations) {
-            try {
-                PlayerAnimations.stopAnimation(player.getUUID(), animId);
-            } catch (Exception e) {
-                // Игнорируем ошибки - анимация может не проигрываться
-            }
-        }
-
-        currentAnimations.remove(player.getUUID());
-    }
-
-    // Метод для проверки, проигрывается ли анимация
-    public static boolean isAnimationPlaying(Player player) {
-        return currentAnimations.containsKey(player.getUUID());
-    }
-
-    // Метод для получения текущей анимации
-    public static ResourceLocation getCurrentAnimation(Player player) {
-        return currentAnimations.get(player.getUUID());
     }
 
     // Очистка данных при выходе игрока

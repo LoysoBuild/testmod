@@ -55,6 +55,9 @@ public record C2SToggleStancePacket() implements CustomPacketPayload {
             String stanceName = next == StanceType.ATTACK ? "§c⚔ Атака" : "§9🛡 Защита";
             serverPlayer.sendSystemMessage(Component.literal("§e✨ Стойка переключена: " + stanceName));
 
+            // ИСПРАВЛЕНИЕ: Добавлен лог для отладки
+            System.out.println("[SERVER] Player " + serverPlayer.getName().getString() + " switched to stance: " + next);
+
             // Смена пресета оружия
             ItemStack stack = serverPlayer.getMainHandItem();
             if (!stack.isEmpty() && WeaponPresetHelper.isWeaponSupported(stack)) {
@@ -64,6 +67,7 @@ public record C2SToggleStancePacket() implements CustomPacketPayload {
             // Отправка пакета анимации на клиент
             try {
                 NetworkManager.sendToPlayer(new S2CPlayStanceAnimationPacket(next), serverPlayer);
+                System.out.println("[SERVER] Sent stance animation packet for: " + next);
             } catch (Exception e) {
                 System.err.println("Failed to send stance animation packet: " + e.getMessage());
             }

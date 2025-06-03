@@ -2,8 +2,8 @@ package com.test_project;
 
 import com.test_project.blocks.ModBlocks;
 import com.test_project.combat.combo.CombatEventHandler;
-import com.test_project.combat.combo.KeyBindings;
-import com.test_project.combat.stance.C2SToggleStancePacket;
+import com.test_project.combat.stance.KeyBindings;
+import com.test_project.combat.stance.NetworkManager;
 import com.test_project.entity.ModEntities;
 import com.test_project.entity.TestMobEntity;
 import com.test_project.faction.FactionAttachments;
@@ -31,8 +31,6 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -71,9 +69,6 @@ public class MainMod {
         modEventBus.addListener(KeyBindings::onRegisterKeys); // только для RegisterKeyMappingsEvent!
         NeoForge.EVENT_BUS.addListener(KeyBindings::onClientTick); // только для ClientTickEvent!
 
-        // Регистрация клиентских мод-ивентов (например, FMLClientSetupEvent)
-        modEventBus.addListener(ClientModEvents::onClientSetup);
-
         // Регистрация конфигов (если есть)
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 
@@ -84,18 +79,7 @@ public class MainMod {
         NeoForge.EVENT_BUS.register(CounterAttackEventHandler.class);
         NeoForge.EVENT_BUS.register(CombatEventHandler.class);
         NeoForge.EVENT_BUS.register(EquipmentEventHandler.class);
-        modEventBus.addListener(MainMod::registerPayloads);
-    }
-
-    // --- Регистрация пользовательских пакетов ---
-    @SubscribeEvent
-    public static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("mainmod"); // modid должен совпадать!
-        registrar.playToServer(
-                C2SToggleStancePacket.TYPE,
-                C2SToggleStancePacket.STREAM_CODEC,
-                C2SToggleStancePacket::handle
-        );
+        modEventBus.addListener(NetworkManager::registerPackets);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
