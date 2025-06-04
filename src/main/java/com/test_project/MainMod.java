@@ -2,7 +2,7 @@ package com.test_project;
 
 import com.test_project.blocks.ModBlocks;
 import com.test_project.combat.combo.CombatEventHandler;
-import com.test_project.combat.stance.KeyBindings;
+
 import com.test_project.combat.stance.NetworkManager;
 import com.test_project.entity.ModEntities;
 import com.test_project.entity.TestMobEntity;
