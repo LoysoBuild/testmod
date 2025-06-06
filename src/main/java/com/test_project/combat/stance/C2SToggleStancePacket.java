@@ -1,20 +1,21 @@
 package com.test_project.combat.stance;
 
-import com.test_project.combat.combo.CombatEventHandler;
+import com.test_project.combat.CombatEventHandler;
 import com.test_project.combat.PlayerCombatSettings;
+import com.test_project.items.weapone.preset.WeaponPresetManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.codec.StreamCodec;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 public record C2SToggleStancePacket() implements CustomPacketPayload {
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public static final Type<C2SToggleStancePacket> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath("mainmod", "toggle_stance"));
@@ -29,48 +30,56 @@ public record C2SToggleStancePacket() implements CustomPacketPayload {
 
     public static void handle(final C2SToggleStancePacket pkt, final IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            Player player = ctx.player();
-            if (!(player instanceof ServerPlayer serverPlayer)) return;
+            if (!(ctx.player() instanceof ServerPlayer serverPlayer)) {
+                LOGGER.warn("[SERVER] Received stance toggle from non-server player");
+                return;
+            }
 
             PlayerCombatSettings settings = CombatEventHandler.getSettings(serverPlayer);
+            StanceType currentStance = settings.getCurrentStance();
+
+            LOGGER.info("[SERVER] Processing stance toggle for player: {} (current: {})",
+                    serverPlayer.getName().getString(), currentStance);
 
             // Проверка кулдауна
             if (settings.isStanceCooldown()) {
-                serverPlayer.sendSystemMessage(Component.literal("§c⏰ Стойку можно сменить только после кулдауна!"));
+                serverPlayer.sendSystemMessage(Component.literal("§cStance is on cooldown!"));
+                LOGGER.debug("[SERVER] Stance toggle blocked - cooldown active for player: {}",
+                        serverPlayer.getName().getString());
                 return;
             }
 
             // Переключение стойки
-            StanceType next = settings.getCurrentStance() == StanceType.ATTACK
-                    ? StanceType.DEFENSE
-                    : StanceType.ATTACK;
+            StanceType nextStance = currentStance == StanceType.ATTACK ?
+                    StanceType.DEFENSE : StanceType.ATTACK;
 
-            settings.setCurrentStance(next);
-            settings.setStanceCooldown(40); // 2 секунды
+            LOGGER.info("[SERVER] Switching stance: {} -> {} for player: {}",
+                    currentStance, nextStance, serverPlayer.getName().getString());
 
-            // Эффекты переключения
-            serverPlayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1));
+            settings.setCurrentStance(nextStance);
+            settings.setStanceCooldown(40); // 2 секунды кулдауна
 
-            // Уведомление игроку
-            String stanceName = next == StanceType.ATTACK ? "§c⚔ Атака" : "§9🛡 Защита";
-            serverPlayer.sendSystemMessage(Component.literal("§e✨ Стойка переключена: " + stanceName));
+            // Применяем пресет при смене стойки
+            ItemStack mainHand = serverPlayer.getMainHandItem();
+            WeaponPresetManager.changeWeaponPreset(serverPlayer, mainHand, nextStance);
 
-            // ИСПРАВЛЕНИЕ: Добавлен лог для отладки
-            System.out.println("[SERVER] Player " + serverPlayer.getName().getString() + " switched to stance: " + next);
+            // Уведомление игрока
+            String stanceName = nextStance == StanceType.ATTACK ? "§cAttack" : "§9Defense";
+            serverPlayer.sendSystemMessage(Component.literal("§eStance: " + stanceName));
 
-            // Смена пресета оружия
-            ItemStack stack = serverPlayer.getMainHandItem();
-            if (!stack.isEmpty() && WeaponPresetHelper.isWeaponSupported(stack)) {
-                WeaponPresetHelper.setPresetForItem(stack, next, serverPlayer);
-            }
+            // ИСПРАВЛЕНО: Добираем детальное логирование отправки пакета
+            LOGGER.info("[SERVER] Sending animation packet for stance: {} to player: {}",
+                    nextStance, serverPlayer.getName().getString());
 
-            // Отправка пакета анимации на клиент
             try {
-                NetworkManager.sendToPlayer(new S2CPlayStanceAnimationPacket(next), serverPlayer);
-                System.out.println("[SERVER] Sent stance animation packet for: " + next);
+                NetworkManager.sendToPlayer(new S2CPlayStanceAnimationPacket(nextStance), serverPlayer);
+                LOGGER.debug("[SERVER] Successfully sent animation packet for stance: {}", nextStance);
             } catch (Exception e) {
-                System.err.println("Failed to send stance animation packet: " + e.getMessage());
+                LOGGER.error("[SERVER] Failed to send animation packet: {}", e.getMessage(), e);
             }
+
+            LOGGER.info("[SERVER] Stance change completed: {} for player: {}",
+                    nextStance, serverPlayer.getName().getString());
         });
     }
 }

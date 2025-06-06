@@ -5,12 +5,20 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public class NetworkManager {
+
     public static void registerPackets(final RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar("mainmod");
+
         registrar.playToClient(
                 S2CPlayStanceAnimationPacket.TYPE,
                 S2CPlayStanceAnimationPacket.STREAM_CODEC,
                 S2CPlayStanceAnimationPacket::handle
+        );
+
+        registrar.playToServer(
+                C2SToggleStancePacket.TYPE,
+                C2SToggleStancePacket.STREAM_CODEC,
+                C2SToggleStancePacket::handle
         );
     }
 
