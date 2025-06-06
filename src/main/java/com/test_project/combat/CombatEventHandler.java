@@ -6,10 +6,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -44,6 +46,20 @@ public final class CombatEventHandler {
         settings.tickCooldown();
     }
 
+    // НОВОЕ: Обработка атак для анимаций
+    @SubscribeEvent
+    public static void onPlayerAttack(AttackEntityEvent event) {
+        if (event.getEntity().level().isClientSide()) {
+            // На клиенте проигрываем анимацию атаки
+            Player player = event.getEntity();
+            ItemStack weapon = player.getMainHandItem();
+
+            if (!weapon.isEmpty()) {
+                AttackAnimationHandler.playAttackAnimation(player, weapon);
+            }
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
         if (!(event.getSource().getEntity() instanceof ServerPlayer attacker)) return;
@@ -64,6 +80,7 @@ public final class CombatEventHandler {
         float finalDamage = originalDamage;
         boolean damageModified = false;
 
+        // Атакующая стойка
         if (event.getSource().getEntity() instanceof ServerPlayer attacker) {
             PlayerCombatSettings attackerSettings = getSettings(attacker);
             if (attackerSettings.getCurrentStance() == StanceType.ATTACK) {
@@ -75,6 +92,7 @@ public final class CombatEventHandler {
             }
         }
 
+        // Защитная стойка
         if (event.getEntity() instanceof ServerPlayer defender) {
             PlayerCombatSettings defenderSettings = getSettings(defender);
             if (defenderSettings.getCurrentStance() == StanceType.DEFENSE) {
