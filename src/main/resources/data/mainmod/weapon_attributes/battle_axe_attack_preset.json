@@ -1,7 +1,7 @@
 {
   "attributes": {
     "attack_range": 3.0,
-    "idle_animation": "mainmod:idle_axe_attack.json",
+    "idle_animation": "mainmod:axeattackidle",
     "attacks": [
       {
         "animation": "mainmod:first_axe_attack",

@@ -23,11 +23,21 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.damagesource.DamageSource;
 
+/**
+ * Сущность-зеркало игрока с системой боевых стоек.
+ * Демонстрирует работу системы стоек на NPC с анимациями переходов.
+ */
 public class MirrorPlayerEntity extends PathfinderMob {
 
     private PlayerCombatSettings combatSettings;
     private int stanceCooldown = 0;
     private int lastStanceChange = 0;
+
+    // КОНСТАНТЫ: Настройки поведения
+    private static final int MIN_STANCE_CHANGE_INTERVAL = 100; // 5 секунд
+    private static final int MAX_STANCE_CHANGE_INTERVAL = 200; // 10 секунд
+    private static final float LOW_HEALTH_THRESHOLD = 0.3f;    // 30% здоровья
+    private static final double ANIMATION_RANGE = 256.0;       // 16 блоков
 
     public MirrorPlayerEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -74,21 +84,31 @@ public class MirrorPlayerEntity extends PathfinderMob {
         LivingEntity target = this.getTarget();
         if (target == null) return;
 
-        if (this.tickCount - lastStanceChange > (100 + this.random.nextInt(100))) {
+        // ВРЕМЕННОЕ ПЕРЕКЛЮЧЕНИЕ: Меняем стойку через случайные интервалы
+        int timeSinceLastChange = this.tickCount - lastStanceChange;
+        int changeInterval = MIN_STANCE_CHANGE_INTERVAL + this.random.nextInt(MAX_STANCE_CHANGE_INTERVAL - MIN_STANCE_CHANGE_INTERVAL);
+
+        if (timeSinceLastChange > changeInterval) {
             this.switchStance();
             lastStanceChange = this.tickCount;
         }
 
-        if (this.getHealth() / this.getMaxHealth() < 0.3f &&
+        // ЭКСТРЕННОЕ ПЕРЕКЛЮЧЕНИЕ: Переходим в защиту при низком здоровье
+        if (this.getHealth() / this.getMaxHealth() < LOW_HEALTH_THRESHOLD &&
                 this.combatSettings.getCurrentStance() == StanceType.ATTACK) {
             this.switchStance();
         }
     }
 
+    /**
+     * ИСПРАВЛЕННЫЙ МЕТОД: Переключение стойки с правильной передачей параметров анимации
+     */
     public void switchStance() {
         if (stanceCooldown > 0) return;
 
-        StanceType newStance = this.combatSettings.getCurrentStance() == StanceType.ATTACK
+        // ИСПРАВЛЕНО: Сохраняем текущую стойку ДО изменения
+        StanceType currentStance = this.combatSettings.getCurrentStance();
+        StanceType newStance = currentStance == StanceType.ATTACK
                 ? StanceType.DEFENSE
                 : StanceType.ATTACK;
 
@@ -98,19 +118,20 @@ public class MirrorPlayerEntity extends PathfinderMob {
         if (!this.level().isClientSide) {
             this.level().players().forEach(player -> {
                 if (player instanceof ServerPlayer serverPlayer &&
-                        this.distanceToSqr(player) < 256) {
-                    NetworkManager.sendToPlayer(new S2CPlayStanceAnimationPacket(newStance), serverPlayer);
+                        this.distanceToSqr(player) < ANIMATION_RANGE) {
+                    // ИСПРАВЛЕНО: Передаем оба параметра - fromStance и toStance
+                    NetworkManager.sendToPlayer(new S2CPlayStanceAnimationPacket(currentStance, newStance), serverPlayer);
                 }
             });
         }
 
         String stanceName = newStance == StanceType.ATTACK ? "Attack" : "Defense";
+        String colorCode = newStance == StanceType.ATTACK ? "c" : "9";
+
         this.level().players().forEach(player -> {
-            if (this.distanceToSqr(player) < 256) {
+            if (this.distanceToSqr(player) < ANIMATION_RANGE) {
                 player.sendSystemMessage(Component.literal(
-                        "§6Mirror Player switched to §" +
-                                (newStance == StanceType.ATTACK ? "c" : "9") +
-                                stanceName + " Stance"
+                        "§6Mirror Player switched to §" + colorCode + stanceName + " Stance"
                 ));
             }
         });
@@ -137,7 +158,9 @@ public class MirrorPlayerEntity extends PathfinderMob {
         return super.mobInteract(player, hand);
     }
 
-    // ИСПРАВЛЕНО: Убран @Override, это кастомный метод для нанесения урона с модификаторами
+    /**
+     * КАСТОМНЫЙ МЕТОД: Атака с модификаторами стойки
+     */
     public boolean performStanceAttack(LivingEntity target) {
         // Применяем модификатор урона в зависимости от стойки
         float damageMultiplier = switch (this.getCurrentStance()) {

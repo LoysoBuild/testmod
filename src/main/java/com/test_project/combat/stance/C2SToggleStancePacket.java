@@ -36,6 +36,8 @@ public record C2SToggleStancePacket() implements CustomPacketPayload {
             }
 
             PlayerCombatSettings settings = CombatEventHandler.getSettings(serverPlayer);
+
+            // ИСПРАВЛЕНО: Сохраняем текущую стойку ДО изменения
             StanceType currentStance = settings.getCurrentStance();
 
             LOGGER.info("[SERVER] Processing stance toggle for player: {} (current: {})",
@@ -56,6 +58,7 @@ public record C2SToggleStancePacket() implements CustomPacketPayload {
             LOGGER.info("[SERVER] Switching stance: {} -> {} for player: {}",
                     currentStance, nextStance, serverPlayer.getName().getString());
 
+            // ИСПРАВЛЕНО: Применяем изменения ПОСЛЕ сохранения currentStance
             settings.setCurrentStance(nextStance);
             settings.setStanceCooldown(40); // 2 секунды кулдауна
 
@@ -67,15 +70,17 @@ public record C2SToggleStancePacket() implements CustomPacketPayload {
             String stanceName = nextStance == StanceType.ATTACK ? "§cAttack" : "§9Defense";
             serverPlayer.sendSystemMessage(Component.literal("§eStance: " + stanceName));
 
-            // ИСПРАВЛЕНО: Добираем детальное логирование отправки пакета
-            LOGGER.info("[SERVER] Sending animation packet for stance: {} to player: {}",
-                    nextStance, serverPlayer.getName().getString());
+            // ИСПРАВЛЕНО: Отправляем пакет с двумя параметрами (fromStance и toStance)
+            LOGGER.info("[SERVER] Sending transition animation packet: {} -> {} to player: {}",
+                    currentStance, nextStance, serverPlayer.getName().getString());
 
             try {
-                NetworkManager.sendToPlayer(new S2CPlayStanceAnimationPacket(nextStance), serverPlayer);
-                LOGGER.debug("[SERVER] Successfully sent animation packet for stance: {}", nextStance);
+                // ИСПРАВЛЕНО: Передаем currentStance (откуда) и nextStance (куда)
+                NetworkManager.sendToPlayer(new S2CPlayStanceAnimationPacket(currentStance, nextStance), serverPlayer);
+                LOGGER.debug("[SERVER] Successfully sent transition animation packet: {} -> {}",
+                        currentStance, nextStance);
             } catch (Exception e) {
-                LOGGER.error("[SERVER] Failed to send animation packet: {}", e.getMessage(), e);
+                LOGGER.error("[SERVER] Failed to send transition animation packet: {}", e.getMessage(), e);
             }
 
             LOGGER.info("[SERVER] Stance change completed: {} for player: {}",

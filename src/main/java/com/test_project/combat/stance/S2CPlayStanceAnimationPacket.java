@@ -9,22 +9,34 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
-public record S2CPlayStanceAnimationPacket(StanceType stance) implements CustomPacketPayload {
+/**
+ * Сетевой пакет для передачи информации о смене стойки с сервера на клиент.
+ * Содержит информацию об исходной и целевой стойке для правильной анимации перехода.
+ */
+public record S2CPlayStanceAnimationPacket(StanceType fromStance, StanceType toStance) implements CustomPacketPayload {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static final Type<S2CPlayStanceAnimationPacket> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath("mainmod", "play_stance_animation"));
 
+    /**
+     * КОДЕК: Сериализация и десериализация пакета
+     * Передает два enum'а для определения направления перехода
+     */
     public static final StreamCodec<FriendlyByteBuf, S2CPlayStanceAnimationPacket> STREAM_CODEC =
             StreamCodec.of(
+                    // Сериализация: записываем fromStance и toStance
                     (buf, pkt) -> {
-                        buf.writeEnum(pkt.stance);
-                        LOGGER.debug("[NETWORK] Encoding stance animation packet: {}", pkt.stance);
+                        buf.writeEnum(pkt.fromStance);
+                        buf.writeEnum(pkt.toStance);
+                        LOGGER.debug("[NETWORK] Encoded stance transition: {} -> {}", pkt.fromStance, pkt.toStance);
                     },
+                    // Десериализация: читаем fromStance и toStance
                     buf -> {
-                        StanceType stance = buf.readEnum(StanceType.class);
-                        LOGGER.debug("[NETWORK] Decoding stance animation packet: {}", stance);
-                        return new S2CPlayStanceAnimationPacket(stance);
+                        StanceType fromStance = buf.readEnum(StanceType.class);
+                        StanceType toStance = buf.readEnum(StanceType.class);
+                        LOGGER.debug("[NETWORK] Decoded stance transition: {} -> {}", fromStance, toStance);
+                        return new S2CPlayStanceAnimationPacket(fromStance, toStance);
                     }
             );
 
@@ -33,23 +45,37 @@ public record S2CPlayStanceAnimationPacket(StanceType stance) implements CustomP
         return TYPE;
     }
 
+    /**
+     * ОБРАБОТЧИК: Обработка пакета на клиенте
+     * Запускает анимацию перехода между стойками
+     */
     public static void handle(final S2CPlayStanceAnimationPacket pkt, final IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            LOGGER.info("[CLIENT] Received stance animation packet: {}", pkt.stance());
+            LOGGER.info("[CLIENT] Received stance transition packet: {} -> {}", pkt.fromStance(), pkt.toStance());
 
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                // ИСПРАВЛЕНО: Добавляем приоритет для выполнения на главном потоке
-                mc.executeBlocking(() -> {
+                // ОПТИМИЗАЦИЯ: Выполняем на главном потоке клиента
+                mc.execute(() -> {
                     try {
-                        StanceAnimationManager.playStance(mc.player, pkt.stance());
-                        LOGGER.info("[CLIENT] Successfully processed stance animation: {}", pkt.stance());
+                        // ИСПРАВЛЕНО: Вызываем метод перехода для анимации переключения
+                        StanceAnimationManager.playStanceTransition(mc.player, pkt.fromStance(), pkt.toStance());
+                        LOGGER.info("[CLIENT] Successfully processed stance transition: {} -> {}",
+                                pkt.fromStance(), pkt.toStance());
                     } catch (Exception e) {
-                        LOGGER.error("[CLIENT] Error playing stance animation: {}", e.getMessage(), e);
+                        LOGGER.error("[CLIENT] Error playing stance transition: {}", e.getMessage(), e);
+
+                        // FALLBACK: Если анимация перехода не удалась, переходим к idle-анимации
+                        try {
+                            StanceAnimationManager.playStance(mc.player, pkt.toStance());
+                            LOGGER.info("[CLIENT] Fallback to idle stance: {}", pkt.toStance());
+                        } catch (Exception fallbackException) {
+                            LOGGER.error("[CLIENT] Fallback also failed: {}", fallbackException.getMessage());
+                        }
                     }
                 });
             } else {
-                LOGGER.warn("[CLIENT] Cannot play stance animation - player is null");
+                LOGGER.warn("[CLIENT] Cannot play stance transition - player is null");
             }
         });
     }
